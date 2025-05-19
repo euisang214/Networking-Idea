@@ -1,4 +1,18 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+const { describe, it, expect, beforeAll, vi } = require('./test-helpers');
+
+vi.mock('../backend/services/emailService', () => ({ sendEmail: vi.fn() }));
+vi.mock('../backend/models/user', () => ({}));
+vi.mock('bcryptjs', () => ({ genSalt: vi.fn(), hash: vi.fn(), compare: vi.fn() }));
+vi.mock('../backend/utils/logger', () => ({ debug: vi.fn(), error: vi.fn() }));
+vi.mock('jsonwebtoken', () => ({
+  sign: (payload, secret) => Buffer.from(JSON.stringify(payload)).toString('base64') + '.' + secret,
+  verify: (token, secret) => {
+    const [data, sec] = token.split('.');
+    if (sec !== secret) throw new Error('invalid');
+    return JSON.parse(Buffer.from(data, 'base64').toString());
+  }
+}));
+
 const AuthService = require('../backend/services/authService');
 
 describe('AuthService token methods', () => {

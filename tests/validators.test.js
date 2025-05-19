@@ -1,11 +1,16 @@
-import { describe, it, expect, vi } from 'vitest';
+const { describe, it, expect, vi } = require('./test-helpers');
 
 vi.mock('express-validator', () => {
+  const chain = new Proxy(function() {}, {
+    get: () => chain,
+    apply: () => chain
+  });
+  const makeChain = () => chain;
   return {
     validationResult: vi.fn(),
-    body: () => 'body',
-    param: () => 'param',
-    query: () => 'query'
+    body: makeChain,
+    param: makeChain,
+    query: makeChain
   };
 });
 
