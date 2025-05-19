@@ -35,3 +35,39 @@ MentorConnect is a web platform that connects prospective candidates with anonym
 ### Local Development Setup
 
 1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd Networking-Idea
+   ```
+2. Copy the example environment variables:
+   ```bash
+   cp env-example.txt .env
+   ```
+3. Edit `.env` with your own credentials for MongoDB, Stripe, SendGrid, Zoom and other keys. These variables are used by both the backend and frontend services.
+4. **Option A: Docker Compose (recommended)**
+   1. Ensure Docker is running.
+   2. Start the stack:
+      ```bash
+      docker compose up --build
+      ```
+   3. The frontend will be available at `http://localhost:3000` and the API at `http://localhost:5000`.
+5. **Option B: Run services manually**
+   1. Install frontend dependencies:
+      ```bash
+      npm install
+      ```
+   2. Start MongoDB locally and set the connection string in `.env`.
+   3. Run the backend:
+      ```bash
+      node backend/index.js
+      ```
+      _Note: the `backend` directory does not include a `package.json` file. The Docker container has the required dependencies preinstalled. Running the backend outside Docker may require creating your own `package.json` and installing the dependencies manually._
+   4. In a separate terminal start the frontend:
+      ```bash
+      npm start
+      ```
+6. Run unit tests (optional):
+   ```bash
+   npm test
+   ```
+
