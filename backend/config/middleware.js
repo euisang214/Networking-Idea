@@ -14,7 +14,16 @@ const logger = require('../utils/logger');
  */
 const configureMiddleware = (app) => {
   // Body parser middleware
-  app.use(express.json({ limit: '10mb' }));
+  app.use(
+    express.json({
+      limit: '10mb',
+      verify: (req, res, buf) => {
+        if (req.originalUrl.startsWith('/api/webhooks/')) {
+          req.rawBody = buf.toString();
+        }
+      }
+    })
+  );
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
   
   // Security middleware
@@ -40,24 +49,7 @@ const configureMiddleware = (app) => {
   // Swagger API docs
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
   
-  // Raw body for webhooks
-  app.use((req, res, next) => {
-    if (req.originalUrl.startsWith('/api/webhooks/')) {
-      let data = '';
-      req.setEncoding('utf8');
-      
-      req.on('data', (chunk) => {
-        data += chunk;
-      });
-      
-      req.on('end', () => {
-        req.rawBody = data;
-        next();
-      });
-    } else {
-      next();
-    }
-  });
+
   
   // Error handling middleware
   app.use(errorHandler);
