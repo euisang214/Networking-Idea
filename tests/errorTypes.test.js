@@ -9,6 +9,7 @@ const {
   ServerError,
   ExternalServiceError
 } = require('../backend/utils/errorTypes');
+const { describe, it, expect } = require('./test-helpers');
 
 describe('Error Types', () => {
   it('should set default properties in AppError', () => {

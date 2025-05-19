@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+const { describe, it, expect, vi, beforeEach } = require('./test-helpers');
 
 vi.mock('../backend/utils/logger', () => ({
   default: { error: vi.fn() },

@@ -1,6 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import fs from 'fs';
-import path from 'path';
+const { describe, it, expect, vi, beforeEach } = require('./test-helpers');
+const fs = require('fs');
+const path = require('path');
+
+vi.mock('winston', () => ({
+  format: { combine: () => ({}), printf: () => {}, timestamp: () => {}, errors: () => {}, splat: () => {}, colorize: () => {} },
+  transports: { Console: class {}, File: class {} },
+  createLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn() })
+}));
 
 const logDir = path.join(__dirname, '../backend/logs');
 
@@ -13,11 +19,11 @@ describe('logger utility', () => {
 
   it('requestLogger logs based on status code', () => {
     const req = { method:'GET', url:'/x', headers:{} };
-    const res = { statusCode:200, on(event, cb){ if(event==='finish') this._cb=cb; }, end(){ this._cb(); }};
+    const res = { statusCode:200, _cbs:[], on(event, cb){ if(event==='finish') this._cbs.push(cb); }, end(){ this._cbs.forEach(fn=>fn()); }};
     const debugSpy = vi.spyOn(logger, 'debug').mockImplementation(() => {});
     logger.requestLogger(req, res, () => {});
     res.on('finish', ()=>{}); // Should not call debug until finish
-    res._cb();
+    res.end();
     expect(debugSpy).toHaveBeenCalled();
     debugSpy.mockRestore();
   });
