@@ -1,111 +1,116 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
-import { MailIcon } from '@heroicons/react/outline';
-import { Input, Button, Card } from '../common';
-import useAuth from '../../hooks/useAuth';
+import { useForm } from '../../hooks/useForm';
+import AuthAPI from '../../api/auth';
+import Input from '../../common/Input';
+import Button from '../../common/Button';
 
 const ForgotPasswordForm = () => {
-  const { forgotPassword } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [error, setError] = useState('');
+  const [resetRequested, setResetRequested] = useState(false);
   
-  // Form validation schema
-  const validationSchema = Yup.object({
-    email: Yup.string()
-      .email('Invalid email address')
-      .required('Email is required'),
-  });
-  
-  // Form initialization
-  const formik = useFormik({
-    initialValues: {
-      email: '',
+  // Initialize form state with useForm hook
+  const { values, handleChange, handleSubmit, errors } = useForm(
+    {
+      email: ''
     },
-    validationSchema,
-    onSubmit: async (values) => {
-      setIsLoading(true);
-      try {
-        const result = await forgotPassword(values.email);
-        if (result.success) {
-          setIsSubmitted(true);
-        }
-      } catch (error) {
-        console.error('Forgot password error:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-  });
+    handleResetRequest,
+    validateEmail
+  );
   
-  if (isSubmitted) {
+  // Form validation function
+  function validateEmail(values) {
+    const errors = {};
+    
+    if (!values.email) {
+      errors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(values.email)) {
+      errors.email = 'Email is invalid';
+    }
+    
+    return errors;
+  }
+  
+  // Handle reset request
+  async function handleResetRequest() {
+    setError('');
+    setIsLoading(true);
+    
+    try {
+      await AuthAPI.requestPasswordReset(values.email);
+      setResetRequested(true);
+    } catch (err) {
+      // In case of error, we don't want to expose whether the email exists or not for security
+      // So we still show success message but log the error
+      console.error('Reset request error:', err);
+      setResetRequested(true);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+  
+  if (resetRequested) {
     return (
-      <Card>
-        <div className="text-center">
-          <h3 className="text-lg font-medium text-gray-900">Check your email</h3>
-          <div className="mt-2">
-            <p className="text-sm text-gray-500">
-              We've sent a password reset link to <strong>{formik.values.email}</strong>. 
-              Please check your email and follow the instructions to reset your password.
-            </p>
-          </div>
-          <div className="mt-6">
-            <Button variant="outline" to="/login">
-              Return to login
-            </Button>
-          </div>
-        </div>
-      </Card>
+      <div className="max-w-md mx-auto text-center">
+        <svg className="w-16 h-16 mx-auto text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <h2 className="text-2xl font-bold mt-4 mb-2">Check Your Email</h2>
+        <p className="text-gray-600 mb-6">
+          If an account exists with {values.email}, we've sent instructions to reset your password. 
+          Please check your email inbox, including spam or junk folders.
+        </p>
+        <Button variant="primary" onClick={() => window.location.href = '/login'}>
+          Return to Login
+        </Button>
+      </div>
     );
   }
   
   return (
-    <div>
-      <h2 className="text-lg font-medium text-gray-900">Forgot your password?</h2>
-      <p className="mt-1 text-sm text-gray-600">
-        No worries, we'll send you reset instructions.
+    <div className="max-w-md mx-auto">
+      <h2 className="text-2xl font-bold text-center mb-2">Reset Your Password</h2>
+      <p className="text-center text-gray-600 mb-6">
+        Enter your email address and we'll send you instructions to reset your password.
       </p>
       
-      <form className="mt-6 space-y-6" onSubmit={formik.handleSubmit}>
-        <div>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            label="Email address"
-            placeholder="Enter your email"
-            value={formik.values.email}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.email && formik.errors.email}
-            disabled={isLoading}
-            required
-            icon={<MailIcon className="h-5 w-5 text-gray-400" />}
-          />
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          {error}
         </div>
+      )}
+      
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <Input
+          label="Email Address"
+          name="email"
+          type="email"
+          value={values.email}
+          onChange={handleChange}
+          error={errors.email}
+          required
+        />
         
-        <div>
-          <Button
-            type="submit"
-            variant="primary"
-            fullWidth
-            disabled={isLoading}
-            isLoading={isLoading}
-          >
-            Send reset instructions
-          </Button>
-        </div>
-        
-        <div className="text-center">
-          <p className="text-sm text-gray-600">
-            Remember your password?{' '}
-            <Link to="/login" className="font-medium text-primary-600 hover:text-primary-500">
-              Back to login
-            </Link>
-          </p>
-        </div>
+        <Button
+          type="submit"
+          variant="primary"
+          fullWidth
+          isLoading={isLoading}
+          disabled={isLoading}
+        >
+          Send Reset Link
+        </Button>
       </form>
+      
+      <div className="mt-6 text-center">
+        <p className="text-sm text-gray-600">
+          Remember your password?{' '}
+          <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
+            Sign in
+          </Link>
+        </p>
+      </div>
     </div>
   );
 };

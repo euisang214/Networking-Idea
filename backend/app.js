@@ -1,65 +1,111 @@
-/**
- * Main application setup
- */
 const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const compression = require('compression');
-const morgan = require('morgan');
-const passport = require('passport');
-const swaggerUi = require('swagger-ui-express');
-
-// Import configuration
-const passportConfig = require('./config/passport');
-const middlewareConfig = require('./config/middleware');
-const swaggerSpec = require('./config/swagger');
-
-// Import routes
+const path = require('path');
+const http = require('http');
+const socketIo = require('socket.io');
+const connectDatabase = require('./config/database');
+const configurePassport = require('./config/passport');
+const configureMiddleware = require('./config/middleware');
 const apiRoutes = require('./routes/api');
+const logger = require('./utils/logger');
+const cronJobs = require('./cron');
 
-// Import middlewares
-const errorHandler = require('./middlewares/errorHandler');
-
-// Create Express app
+// Initialize Express app
 const app = express();
+const server = http.createServer(app);
 
-// Apply security middlewares
-app.use(helmet());
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+// Configure middleware
+configureMiddleware(app);
 
-// Apply general middlewares
-app.use(compression());
-app.use(morgan('combined'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Initialize Passport and use authentication strategies
-app.use(passport.initialize());
-passportConfig(passport);
-
-// Apply middleware configuration
-middlewareConfig(app);
-
-// API documentation
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// Configure passport
+configurePassport();
 
 // API routes
 app.use('/api', apiRoutes);
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'ok',
-    message: 'Service is running',
-    timestamp: new Date()
+// Serve static assets in production
+if (process.env.NODE_ENV === 'production') {
+  // Set static folder
+  app.use(express.static(path.join(__dirname, '../frontend/build')));
+  
+  // Any routes not caught by API will load the React app
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../frontend/build', 'index.html'));
+  });
+}
+
+// Set up Socket.io
+const io = socketIo(server, {
+  cors: {
+    origin: process.env.NODE_ENV === 'production' ? false : ['http://localhost:3000'],
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
+
+// Socket.io connection handling
+io.on('connection', socket => {
+  logger.info(`Socket.io connection established: ${socket.id}`);
+  
+  // Join user to personal room
+  socket.on('join-user', userId => {
+    if (userId) {
+      socket.join(`user-${userId}`);
+      logger.debug(`User ${userId} joined socket room`);
+    }
+  });
+  
+  // Leave user room
+  socket.on('leave-user', userId => {
+    if (userId) {
+      socket.leave(`user-${userId}`);
+      logger.debug(`User ${userId} left socket room`);
+    }
+  });
+  
+  // Handle disconnect
+  socket.on('disconnect', () => {
+    logger.debug(`Socket.io connection closed: ${socket.id}`);
   });
 });
 
-// Error handler must be after all middleware and routes
-app.use(errorHandler);
+// Make io available globally
+global.io = io;
 
-module.exports = app;
+// Handle uncaught exceptions
+process.on('uncaughtException', err => {
+  logger.error('UNCAUGHT EXCEPTION! Shutting down...', { error: err });
+  process.exit(1);
+});
+
+// Handle unhandled rejections
+process.on('unhandledRejection', err => {
+  logger.error('UNHANDLED REJECTION! Shutting down...', { error: err });
+  process.exit(1);
+});
+
+// Initialize cron jobs
+cronJobs.initCronJobs();
+
+// Graceful shutdown
+const gracefulShutdown = async () => {
+  logger.info('Shutting down gracefully...');
+  
+  // Stop cron jobs
+  cronJobs.stopCronJobs();
+  
+  // Close server
+  if (server.listening) {
+    server.close(() => {
+      logger.info('HTTP server closed');
+      process.exit(0);
+    });
+  } else {
+    process.exit(0);
+  }
+};
+
+// Handle termination signals
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
+
+module.exports = { app, server };

@@ -1,419 +1,362 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
-  ClockIcon, 
-  CalendarIcon, 
-  VideoCameraIcon,
-  ChatAlt2Icon,
-  CreditCardIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationCircleIcon,
-  StarIcon,
-  ChevronDownIcon,
-  ChevronUpIcon
-} from '@heroicons/react/outline';
-import { format } from 'date-fns';
-import { Card, Button, Modal, ConfirmationModal } from '../common';
-import useAuth from '../../hooks/useAuth';
+import React, { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
+import SessionsAPI from '../../api/sessions';
+import Card from '../common/Card';
+import Button from '../common/Button';
+import Spinner from '../common/Spinner';
 
-const SessionDetail = ({ 
-  session, 
-  onCancel, 
-  onComplete, 
-  onJoin, 
-  isLoading = false 
-}) => {
+const SessionDetail = () => {
+  const { sessionId } = useParams();
   const { user } = useAuth();
-  const navigate = useNavigate();
-  const [showCancelModal, setShowCancelModal] = useState(false);
-  const [showCompleteModal, setShowCompleteModal] = useState(false);
-  const [showDetailsDropdown, setShowDetailsDropdown] = useState(false);
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   
-  if (!session) return null;
+  useEffect(() => {
+    fetchSessionDetails();
+  }, [sessionId]);
   
-  // Helper to determine if user is the seeker in this session
-  const isSeeker = user?.id === session.seeker_id;
-  
-  // Helper to determine if user is the professional in this session
-  const isProfessional = user?.id === session.professional_id;
-  
-  // Format session date
-  const formattedDate = session.scheduled_at 
-    ? format(new Date(session.scheduled_at), 'EEEE, MMMM d, yyyy')
-    : '';
-  
-  // Format session time
-  const formattedTime = session.scheduled_at
-    ? format(new Date(session.scheduled_at), 'h:mm a')
-    : '';
-  
-  // Get status badge color
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'scheduled':
-        return 'bg-blue-100 text-blue-800';
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      case 'no_show':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+  const fetchSessionDetails = async () => {
+    try {
+      const sessionData = await SessionsAPI.getSession(sessionId);
+      setSession(sessionData);
+    } catch (err) {
+      setError('Failed to load session details. Please try again later.');
+      console.error('Error fetching session details:', err);
+    } finally {
+      setLoading(false);
     }
   };
   
-  // Get status icon
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'scheduled':
-        return <CalendarIcon className="h-5 w-5" />;
-      case 'completed':
-        return <CheckCircleIcon className="h-5 w-5" />;
-      case 'cancelled':
-        return <XCircleIcon className="h-5 w-5" />;
-      case 'no_show':
-        return <ExclamationCircleIcon className="h-5 w-5" />;
-      default:
-        return null;
-    }
+  // Format date and time
+  const formatDateTime = (dateString) => {
+    const options = {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZoneName: 'short'
+    };
+    return new Date(dateString).toLocaleString('en-US', options);
   };
   
-  // Helper function to check if session is upcoming
+  // Format date only
+  const formatDate = (dateString) => {
+    const options = {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    };
+    return new Date(dateString).toLocaleString('en-US', options);
+  };
+  
+  // Calculate session duration in minutes
+  const calculateDuration = () => {
+    if (!session) return 0;
+    
+    const start = new Date(session.startTime);
+    const end = new Date(session.endTime);
+    return Math.round((end - start) / (1000 * 60));
+  };
+  
+  // Check if session is upcoming
   const isUpcoming = () => {
-    if (session.status !== 'scheduled') return false;
-    const sessionDate = new Date(session.scheduled_at);
-    return sessionDate > new Date();
+    if (!session) return false;
+    return new Date(session.startTime) > new Date();
   };
   
-  // Helper function to check if session is about to start (within 15 minutes)
-  const isAboutToStart = () => {
-    if (session.status !== 'scheduled') return false;
-    const sessionDate = new Date(session.scheduled_at);
-    const now = new Date();
-    const diffInMinutes = (sessionDate - now) / (1000 * 60);
-    return diffInMinutes <= 15 && diffInMinutes >= -60; // Can join 15 min before, up to 60 min after
-  };
-  
-  // Helper function to check if session is past
-  const isPast = () => {
-    if (session.status !== 'scheduled') return false;
-    const sessionDate = new Date(session.scheduled_at);
-    sessionDate.setMinutes(sessionDate.getMinutes() + session.duration_minutes);
-    return sessionDate < new Date();
-  };
-  
-  // Helper to render action buttons based on session status and user role
-  const renderActionButtons = () => {
-    if (session.status === 'cancelled' || session.status === 'no_show') {
-      return (
-        <Button
-          variant="outline"
-          onClick={() => navigate('/professionals')}
-        >
-          Find Another Professional
-        </Button>
-      );
+  // Get user type - professional or candidate
+  const getUserType = () => {
+    if (!session || !user) return null;
+    
+    if (session.professional && session.professional.user === user.id) {
+      return 'professional';
+    } else if (session.user && session.user._id === user.id) {
+      return 'candidate';
     }
     
-    if (session.status === 'completed') {
-      if (isSeeker && !session.feedback) {
-        return (
-          <Button
-            variant="primary"
-            onClick={() => navigate(`/sessions/${session.id}/feedback`)}
-          >
-            Leave Feedback
-          </Button>
-        );
-      }
-      return (
-        <Button
-          variant="outline"
-          onClick={() => navigate('/sessions')}
-        >
-          View All Sessions
-        </Button>
-      );
-    }
-    
-    // For scheduled sessions
-    return (
-      <div className="flex space-x-3">
-        {isAboutToStart() && (
-          <Button
-            variant="primary"
-            onClick={onJoin}
-            className="flex items-center"
-          >
-            <VideoCameraIcon className="h-5 w-5 mr-1" />
-            Join Session
-          </Button>
-        )}
-        
-        {isUpcoming() && (
-          <Button
-            variant="outline"
-            onClick={() => setShowCancelModal(true)}
-            className="text-red-600 border-red-300 hover:bg-red-50"
-          >
-            Cancel Session
-          </Button>
-        )}
-        
-        {isPast() && isProfessional && (
-          <Button
-            variant="primary"
-            onClick={() => setShowCompleteModal(true)}
-          >
-            Mark as Completed
-          </Button>
-        )}
-      </div>
-    );
+    return null;
   };
   
-  // Render stars for rating
-  const renderStars = (rating) => {
+  if (loading) {
     return (
-      <div className="flex">
-        {[...Array(5)].map((_, index) => (
-          <StarIcon
-            key={index}
-            className={`h-5 w-5 ${
-              index < (rating || 0) ? 'text-yellow-400' : 'text-gray-300'
-            }`}
-          />
-        ))}
+      <div className="flex justify-center py-12">
+        <Spinner size="lg" text="Loading session details..." />
       </div>
     );
-  };
+  }
+  
+  if (error || !session) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <span className="block sm:inline">{error || 'Session not found'}</span>
+        </div>
+      </div>
+    );
+  }
   
   return (
-    <>
-      <Card>
-        <div className="flex justify-between items-start">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">
-              Session Details
-            </h2>
-            <div className="mt-1">
-              <span
-                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                  session.status
-                )}`}
-              >
-                {getStatusIcon(session.status)}
-                <span className="ml-1 capitalize">{session.status}</span>
-              </span>
-            </div>
-          </div>
-          
-          {/* Show payment status for seeker */}
-          {isSeeker && session.payment && (
-            <div className="flex items-center text-sm text-gray-500">
-              <CreditCardIcon className="h-5 w-5 mr-1" />
-              <span className="capitalize">{session.payment.status}</span>
-            </div>
-          )}
-        </div>
-        
-        <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <div className="col-span-2 sm:col-span-1">
-            <h3 className="text-base font-medium text-gray-900">
-              Professional
-            </h3>
-            <div className="mt-2 flex items-center">
-              <img
-                className="h-12 w-12 rounded-full object-cover"
-                src={session.professional_profile_picture || '/images/default-avatar.png'}
-                alt="Professional"
-              />
-              <div className="ml-4">
-                <p className="text-base font-medium text-gray-900">
-                  {session.professional_first_name} {session.professional_last_name}
-                </p>
-                <p className="text-sm text-gray-500">
-                  {session.professional_job_title}
-                </p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="col-span-2 sm:col-span-1">
-            <h3 className="text-base font-medium text-gray-900">
-              Session Information
-            </h3>
-            <div className="mt-2 space-y-2">
-              <div className="flex items-center text-sm text-gray-500">
-                <CalendarIcon className="h-5 w-5 mr-2 text-gray-400" />
-                {formattedDate}
-              </div>
-              <div className="flex items-center text-sm text-gray-500">
-                <ClockIcon className="h-5 w-5 mr-2 text-gray-400" />
-                {formattedTime} ({session.duration_minutes} minutes)
-              </div>
-              {session.zoom_meeting_url && (
-                <div className="flex items-center text-sm text-gray-500">
-                  <VideoCameraIcon className="h-5 w-5 mr-2 text-gray-400" />
-                  Zoom Meeting
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-        
-        <div className="mt-6">
-          <h3 className="text-base font-medium text-gray-900">
-            Discussion Topic
-          </h3>
-          <p className="mt-2 text-sm text-gray-500">
-            {session.topic || 'No topic specified'}
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Session Details</h1>
+          <p className="text-gray-600">
+            {getUserType() === 'professional' 
+              ? `With ${session.user.firstName} ${session.user.lastName}`
+              : `With ${session.professional.anonymizedProfile.displayName}`}
           </p>
         </div>
         
-        {/* Show feedback if available and completed */}
-        {session.status === 'completed' && (
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-medium text-gray-900">
-                Feedback
-              </h3>
-              {session.rating > 0 && renderStars(session.rating)}
-            </div>
-            {session.feedback ? (
-              <p className="mt-2 text-sm text-gray-500">
-                {session.feedback}
-              </p>
-            ) : isSeeker ? (
-              <p className="mt-2 text-sm text-gray-500 italic">
-                You haven't left feedback yet.
-              </p>
-            ) : (
-              <p className="mt-2 text-sm text-gray-500 italic">
-                No feedback has been provided yet.
-              </p>
-            )}
-          </div>
-        )}
-        
-        {/* Additional details dropdown */}
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <button
-            type="button"
-            className="flex items-center justify-between w-full text-left"
-            onClick={() => setShowDetailsDropdown(!showDetailsDropdown)}
-          >
-            <h3 className="text-base font-medium text-gray-900">
-              Additional Details
-            </h3>
-            {showDetailsDropdown ? (
-              <ChevronUpIcon className="h-5 w-5 text-gray-500" />
-            ) : (
-              <ChevronDownIcon className="h-5 w-5 text-gray-500" />
-            )}
-          </button>
+        <div className="flex space-x-2">
+          <Link to="/sessions">
+            <Button variant="light">
+              Back to Sessions
+            </Button>
+          </Link>
           
-          {showDetailsDropdown && (
-            <div className="mt-4 space-y-3">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-500">Session ID</p>
-                  <p className="font-medium text-gray-900">{session.id}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Created On</p>
-                  <p className="font-medium text-gray-900">
-                    {format(new Date(session.created_at), 'MMM d, yyyy')}
-                  </p>
-                </div>
-                {session.payment && (
-                  <>
-                    <div>
-                      <p className="text-gray-500">Payment ID</p>
-                      <p className="font-medium text-gray-900">
-                        {session.payment.id}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Payment Amount</p>
-                      <p className="font-medium text-gray-900">
-                        ${session.payment.amount}
-                      </p>
-                    </div>
-                  </>
-                )}
+          {isUpcoming() && (
+            <>
+              {session.zoomMeetingUrl && (
+                
+                  href={session.zoomMeetingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button variant="primary">
+                    Join Zoom Meeting
+                  </Button>
+                </a>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main session info */}
+        <div className="lg:col-span-2">
+          <Card>
+            <div className="flex justify-between">
+              <div>
+                <h2 className="text-lg font-medium text-gray-900 mb-1">Session Information</h2>
               </div>
               
-              {session.zoom_meeting_url && (
-                <div>
-                  <p className="text-gray-500">Meeting Link</p>
-                  <a
-                    href={session.zoom_meeting_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-medium text-primary-600 hover:text-primary-500"
-                  >
-                    {session.zoom_meeting_url}
-                  </a>
-                </div>
-              )}
+              <div className="flex space-x-2">
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  session.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                  session.status === 'in-progress' ? 'bg-yellow-100 text-yellow-800' :
+                  session.status === 'completed' ? 'bg-green-100 text-green-800' :
+                  session.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {session.status}
+                </span>
+                
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  session.paymentStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                  session.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' :
+                  session.paymentStatus === 'refunded' ? 'bg-red-100 text-red-800' :
+                  session.paymentStatus === 'released' ? 'bg-green-100 text-green-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  Payment: {session.paymentStatus}
+                </span>
+              </div>
             </div>
-          )}
+            
+            <div className="mt-4 border-t border-gray-200 pt-4">
+              <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4">
+                <div>
+                  <dt className="text-sm font-medium text-gray-500">Date</dt>
+                  <dd className="mt-1 text-sm text-gray-900">
+                    {formatDate(session.startTime)}
+                  </dd>
+                </div>
+                
+                <div>
+                  <dt className="text-sm font-medium text-gray-500">Time</dt>
+                  <dd className="mt-1 text-sm text-gray-900">
+                    {new Date(session.startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} - 
+                    {new Date(session.endTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })}
+                  </dd>
+                </div>
+                
+                <div>
+                  <dt className="text-sm font-medium text-gray-500">Duration</dt>
+                  <dd className="mt-1 text-sm text-gray-900">
+                    {calculateDuration()} minutes
+                  </dd>
+                </div>
+                
+                <div>
+                  <dt className="text-sm font-medium text-gray-500">Price</dt>
+                  <dd className="mt-1 text-sm text-gray-900">
+                    ${session.price?.toFixed(2)}
+                  </dd>
+                </div>
+                
+                {session.zoomMeetingVerified && (
+                  <div className="col-span-2">
+                    <dt className="text-sm font-medium text-gray-500">Verification</dt>
+                    <dd className="mt-1 text-sm text-gray-900 flex items-center">
+                      <svg className="h-5 w-5 text-green-500 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Session verified through Zoom ({session.verificationDetails?.meetingDuration} minutes, {session.verificationDetails?.participantCount} participants)
+                    </dd>
+                  </div>
+                )}
+                
+                {session.notes && (
+                  <div className="col-span-2">
+                    <dt className="text-sm font-medium text-gray-500">Notes</dt>
+                    <dd className="mt-1 text-sm text-gray-900">
+                      {session.notes}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            </div>
+            
+            {session.feedback && (
+              <div className="mt-6 border-t border-gray-200 pt-4">
+                <h3 className="text-md font-medium text-gray-900 mb-2">Feedback</h3>
+                <div className="bg-gray-50 rounded p-4">
+                  <div className="flex items-center">
+                    <div className="flex">
+                      {[...Array(5)].map((_, i) => (
+                        <svg 
+                          key={i}
+                          className={`h-5 w-5 ${i < session.feedback.rating ? 'text-yellow-500' : 'text-gray-300'}`}
+                          fill="currentColor" 
+                          viewBox="0 0 20 20" 
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                      ))}
+                      <span className="ml-2 text-sm text-gray-600">
+                        {session.feedback.rating}/5
+                      </span>
+                    </div>
+                    
+                    <span className="ml-4 text-xs text-gray-500">
+                      Provided on {formatDate(session.feedback.providedAt)}
+                    </span>
+                  </div>
+                  
+                  {session.feedback.comment && (
+                    <p className="mt-2 text-gray-700">
+                      {session.feedback.comment}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </Card>
+          
+          {/* Messages section placeholder */}
+          <Card title="Messages" className="mt-6">
+            <div className="flex justify-center py-6">
+              <div className="text-center">
+                <p className="text-gray-600 mb-4">
+                  Use the messaging feature to communicate about this session.
+                </p>
+                <Link to={`/messages/${getUserType() === 'professional' ? session.user._id : session.professional.user}`}>
+                  <Button variant="primary">
+                    View Messages
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </Card>
         </div>
         
-        {/* Action buttons */}
-        <div className="mt-6 pt-6 border-t border-gray-200 flex justify-end">
-          {renderActionButtons()}
+        {/* Sidebar */}
+        <div className="lg:col-span-1">
+          {/* User/Professional info */}
+          <Card title={getUserType() === 'professional' ? 'Candidate Information' : 'Professional Information'}>
+            {getUserType() === 'professional' ? (
+              <div>
+                <p className="font-medium mb-1">
+                  {session.user.firstName} {session.user.lastName}
+                </p>
+                <p className="text-gray-600 text-sm mb-4">
+                  {session.user.email}
+                </p>
+              </div>
+            ) : (
+              <div>
+                <p className="font-medium mb-1">
+                  {session.professional.anonymizedProfile.displayName}
+                </p>
+                <p className="text-gray-600 text-sm mb-1">
+                  {session.professional.anonymizedProfile.anonymizedTitle}
+                </p>
+                <p className="text-gray-600 text-sm mb-4">
+                  {session.professional.anonymizedProfile.anonymizedCompany}
+                </p>
+              </div>
+            )}
+            
+            <div className="border-t border-gray-200 pt-4 mt-2">
+              <h3 className="text-sm font-medium text-gray-900 mb-2">Meeting Information</h3>
+              {session.zoomMeetingUrl ? (
+                <>
+                  <p className="text-sm text-gray-600 mb-2">
+                    Join the Zoom meeting at the scheduled time to connect.
+                  </p>
+                  
+                    href={session.zoomMeetingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center text-blue-600 hover:text-blue-800"
+                  >
+                    <svg className="h-5 w-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    Join Zoom Meeting
+                  </a>
+                  
+                  {session.zoomMeetingPassword && (
+                    <p className="mt-2 text-sm text-gray-600">
+                      Password: <span className="font-medium">{session.zoomMeetingPassword}</span>
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="text-sm text-gray-600">
+                  Zoom meeting details will be available once the session is confirmed.
+                </p>
+              )}
+            </div>
+          </Card>
+          
+          {/* Session policies */}
+          <Card title="Session Policies" className="mt-6">
+            <div className="space-y-4 text-sm">
+              <div>
+                <h3 className="font-medium text-gray-900">Cancellation Policy</h3>
+                <p className="text-gray-600 mt-1">
+                  Free cancellation up to 24 hours before the scheduled session time. Cancellations made less than 24 hours in advance may be subject to a fee.
+                </p>
+              </div>
+              
+              <div>
+                <h3 className="font-medium text-gray-900">Payment Policy</h3>
+                <p className="text-gray-600 mt-1">
+                  Payment is processed upon booking but only released to the professional after the session is verified as completed through Zoom.
+                </p>
+              </div>
+            </div>
+          </Card>
         </div>
-      </Card>
-      
-      {/* Cancel Confirmation Modal */}
-      <ConfirmationModal
-        isOpen={showCancelModal}
-        onClose={() => setShowCancelModal(false)}
-        title="Cancel Session"
-        onConfirm={() => {
-          setShowCancelModal(false);
-          onCancel && onCancel(session.id);
-        }}
-        confirmText="Yes, Cancel"
-        cancelText="No, Keep It"
-        isLoading={isLoading}
-      >
-        <p className="text-sm text-gray-500">
-          Are you sure you want to cancel this session? This action cannot be undone.
-          {isSeeker && (
-            <span>
-              {' '}
-              You may be eligible for a full refund if cancelling more than 24 hours
-              before the scheduled time.
-            </span>
-          )}
-        </p>
-      </ConfirmationModal>
-      
-      {/* Complete Confirmation Modal */}
-      <ConfirmationModal
-        isOpen={showCompleteModal}
-        onClose={() => setShowCompleteModal(false)}
-        title="Mark Session as Completed"
-        onConfirm={() => {
-          setShowCompleteModal(false);
-          onComplete && onComplete(session.id);
-        }}
-        confirmText="Mark as Completed"
-        cancelText="Cancel"
-        confirmVariant="primary"
-        isLoading={isLoading}
-      >
-        <p className="text-sm text-gray-500">
-          Are you sure you want to mark this session as completed? This will allow
-          the seeker to leave feedback and finalize the payment.
-        </p>
-      </ConfirmationModal>
-    </>
+      </div>
+    </div>
   );
 };
 

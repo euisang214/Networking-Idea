@@ -1,178 +1,140 @@
-/**
- * Notification service
- */
-const NotificationModel = require('../models/notification');
+const Notification = require('../models/notification');
+const User = require('../models/user');
 const logger = require('../utils/logger');
 
-/**
- * Create a notification
- * @param {Object} notificationData - Notification data
- * @returns {Object} Created notification
- */
-exports.createNotification = async (notificationData) => {
-  try {
-    const notification = await NotificationModel.create(notificationData);
-    return notification;
-  } catch (error) {
-    logger.error('Failed to create notification:', error);
-    throw error;
-  }
-};
-
-/**
- * Send a notification to multiple users
- * @param {Array<string>} userIds - Array of user IDs
- * @param {Object} notificationData - Notification data without user_id
- * @returns {Array<Object>} Array of created notifications
- */
-exports.sendNotificationToUsers = async (userIds, notificationData) => {
-  try {
-    const notifications = [];
-    
-    for (const userId of userIds) {
-      const notification = await NotificationModel.create({
-        user_id: userId,
-        title: notificationData.title,
-        content: notificationData.content,
-        type: notificationData.type || 'system'
+class NotificationService {
+  // Send a notification to a user
+  async sendNotification(userId, type, data) {
+    try {
+      const user = await User.findById(userId);
+      
+      if (!user) {
+        throw new Error('User not found');
+      }
+      
+      const notification = new Notification({
+        user: userId,
+        type,
+        data,
+        read: false
       });
       
-      notifications.push(notification);
-    }
-    
-    return notifications;
-  } catch (error) {
-    logger.error('Failed to send notifications to users:', error);
-    throw error;
-  }
-};
-
-/**
- * Send a system notification to all users
- * @param {Object} notificationData - Notification data
- * @returns {number} Number of created notifications
- */
-exports.sendSystemNotification = async (notificationData) => {
-  try {
-    // Get all user IDs
-    const userIds = await require('../models/user').getAllUserIds();
-    
-    let count = 0;
-    
-    for (const userId of userIds) {
-      await NotificationModel.create({
-        user_id: userId,
-        title: notificationData.title,
-        content: notificationData.content,
-        type: 'system'
-      });
+      await notification.save();
       
-      count++;
+      // Emit real-time notification if socket is available
+      if (global.io) {
+        global.io.to(`user-${userId}`).emit('notification', notification);
+      }
+      
+      logger.info(`Notification sent to user ${userId}: ${type}`);
+      
+      return notification;
+    } catch (error) {
+      logger.error(`Failed to send notification: ${error.message}`);
+      throw new Error(`Failed to send notification: ${error.message}`);
     }
-    
-    return count;
-  } catch (error) {
-    logger.error('Failed to send system notification:', error);
-    throw error;
   }
-};
 
-/**
- * Mark a notification as read
- * @param {string} notificationId - Notification ID
- * @param {string} userId - User ID
- * @returns {Object} Updated notification
- */
-exports.markAsRead = async (notificationId, userId) => {
-  try {
-    // Check if notification belongs to user
-    const notification = await NotificationModel.findById(notificationId);
-    
-    if (!notification) {
-      throw new Error('Notification not found');
+  // Get all notifications for a user
+  async getUserNotifications(userId, limit = 20, offset = 0) {
+    try {
+      return await Notification.find({ user: userId })
+                             .sort({ createdAt: -1 })
+                             .skip(offset)
+                             .limit(limit)
+                             .exec();
+    } catch (error) {
+      logger.error(`Failed to get user notifications: ${error.message}`);
+      throw new Error(`Failed to get user notifications: ${error.message}`);
     }
-    
-    if (notification.user_id !== userId) {
-      throw new Error('Unauthorized access to notification');
+  }
+
+  // Get unread notification count for a user
+  async getUnreadCount(userId) {
+    try {
+      return await Notification.countDocuments({ 
+        user: userId,
+        read: false
+      });
+    } catch (error) {
+      logger.error(`Failed to get unread notification count: ${error.message}`);
+      throw new Error(`Failed to get unread notification count: ${error.message}`);
     }
-    
-    const updatedNotification = await NotificationModel.markAsRead(notificationId);
-    return updatedNotification;
-  } catch (error) {
-    logger.error('Failed to mark notification as read:', error);
-    throw error;
   }
-};
 
-/**
- * Mark all notifications as read for a user
- * @param {string} userId - User ID
- * @returns {number} Number of updated notifications
- */
-exports.markAllAsRead = async (userId) => {
-  try {
-    const count = await NotificationModel.markAllAsRead(userId);
-    return count;
-  } catch (error) {
-    logger.error('Failed to mark all notifications as read:', error);
-    throw error;
-  }
-};
-
-/**
- * Delete a notification
- * @param {string} notificationId - Notification ID
- * @param {string} userId - User ID
- * @returns {boolean} True if deleted, false if not found
- */
-exports.deleteNotification = async (notificationId, userId) => {
-  try {
-    // Check if notification belongs to user
-    const notification = await NotificationModel.findById(notificationId);
-    
-    if (!notification) {
-      throw new Error('Notification not found');
+  // Mark a notification as read
+  async markAsRead(notificationId, userId) {
+    try {
+      const notification = await Notification.findById(notificationId);
+      
+      if (!notification) {
+        throw new Error('Notification not found');
+      }
+      
+      // Verify user owns the notification
+      if (notification.user.toString() !== userId) {
+        throw new Error('Unauthorized to access this notification');
+      }
+      
+      notification.read = true;
+      notification.readAt = new Date();
+      
+      await notification.save();
+      
+      return notification;
+    } catch (error) {
+      logger.error(`Failed to mark notification as read: ${error.message}`);
+      throw new Error(`Failed to mark notification as read: ${error.message}`);
     }
-    
-    if (notification.user_id !== userId) {
-      throw new Error('Unauthorized access to notification');
+  }
+
+  // Mark all notifications for a user as read
+  async markAllAsRead(userId) {
+    try {
+      const result = await Notification.updateMany(
+        { user: userId, read: false },
+        { read: true, readAt: new Date() }
+      );
+      
+      logger.info(`Marked ${result.nModified} notifications as read for user ${userId}`);
+      
+      return {
+        success: true,
+        count: result.nModified
+      };
+    } catch (error) {
+      logger.error(`Failed to mark all notifications as read: ${error.message}`);
+      throw new Error(`Failed to mark all notifications as read: ${error.message}`);
     }
-    
-    const success = await NotificationModel.delete(notificationId);
-    return success;
-  } catch (error) {
-    logger.error('Failed to delete notification:', error);
-    throw error;
   }
-};
 
-/**
- * Get unread count for a user
- * @param {string} userId - User ID
- * @returns {number} Count of unread notifications
- */
-exports.getUnreadCount = async (userId) => {
-  try {
-    const count = await NotificationModel.countUnread(userId);
-    return count;
-  } catch (error) {
-    logger.error('Failed to get unread count:', error);
-    throw error;
+  // Delete a notification
+  async deleteNotification(notificationId, userId) {
+    try {
+      const notification = await Notification.findById(notificationId);
+      
+      if (!notification) {
+        throw new Error('Notification not found');
+      }
+      
+      // Verify user owns the notification
+      if (notification.user.toString() !== userId) {
+        throw new Error('Unauthorized to delete this notification');
+      }
+      
+      await notification.remove();
+      
+      logger.info(`Notification ${notificationId} deleted`);
+      
+      return {
+        success: true,
+        notificationId
+      };
+    } catch (error) {
+      logger.error(`Failed to delete notification: ${error.message}`);
+      throw new Error(`Failed to delete notification: ${error.message}`);
+    }
   }
-};
+}
 
-/**
- * Clean up old notifications
- * @param {number} days - Number of days to keep notifications
- * @returns {number} Number of deleted notifications
- */
-exports.cleanupOldNotifications = async (days = 30) => {
-  try {
-    const count = await NotificationModel.deleteOld(days);
-    logger.info(`Deleted ${count} old notifications`);
-    return count;
-  } catch (error) {
-    logger.error('Failed to clean up old notifications:', error);
-    throw error;
-  }
-};
+module.exports = new NotificationService();

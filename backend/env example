@@ -1,0 +1,30 @@
+# Application
+NODE_ENV=development
+PORT=5000
+FRONTEND_URL=http://localhost:3000
+
+# MongoDB
+MONGODB_URI=mongodb://admin:password@mongodb:27017/mentor-connect?authSource=admin
+
+# JWT
+JWT_SECRET=your_jwt_secret_key
+JWT_EXPIRES_IN=7d
+
+# Stripe
+STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
+STRIPE_WEBHOOK_SECRET=whsec_your_stripe_webhook_secret
+
+# SendGrid
+SENDGRID_API_KEY=your_sendgrid_api_key
+EMAIL_FROM=noreply@mentorconnect.com
+PLATFORM_EMAIL=referrals@mentorconnect.com
+
+# Zoom
+ZOOM_API_KEY=your_zoom_api_key
+ZOOM_API_SECRET=your_zoom_api_secret
+ZOOM_VERIFICATION_TOKEN=your_zoom_verification_token
+ZOOM_WEBHOOK_SECRET=your_zoom_webhook_secret
+
+# Business Rules
+PLATFORM_FEE_PERCENT=15
+REFERRAL_REWARD_AMOUNT=50

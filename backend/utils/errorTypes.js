@@ -1,99 +1,82 @@
-/**
- * Custom error types for consistent error handling
- */
+// Custom error types for consistent error handling
 
-/**
- * Base API Error
- */
-class APIError extends Error {
-  constructor(message, details) {
+class AppError extends Error {
+  constructor(message, statusCode) {
     super(message);
-    this.name = this.constructor.name;
-    this.details = details;
+    this.statusCode = statusCode;
+    this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
+    this.isOperational = true;
+
     Error.captureStackTrace(this, this.constructor);
   }
 }
 
-/**
- * 400 Bad Request - The request could not be understood or was missing required parameters
- */
-class BadRequestError extends APIError {
-  constructor(message = 'Bad Request', details) {
-    super(message, details);
+class ValidationError extends AppError {
+  constructor(message, errors = {}) {
+    super(message || 'Validation error', 400);
+    this.name = 'ValidationError';
+    this.errors = errors;
   }
 }
 
-/**
- * 401 Unauthorized - Authentication failed or user does not have permissions
- */
-class UnauthorizedError extends APIError {
-  constructor(message = 'Unauthorized', details) {
-    super(message, details);
+class AuthenticationError extends AppError {
+  constructor(message) {
+    super(message || 'Authentication error', 401);
+    this.name = 'AuthenticationError';
   }
 }
 
-/**
- * 403 Forbidden - User is authenticated but does not have permission
- */
-class ForbiddenError extends APIError {
-  constructor(message = 'Forbidden', details) {
-    super(message, details);
+class AuthorizationError extends AppError {
+  constructor(message) {
+    super(message || 'Not authorized to access this resource', 403);
+    this.name = 'AuthorizationError';
   }
 }
 
-/**
- * 404 Not Found - Resource not found
- */
-class NotFoundError extends APIError {
-  constructor(message = 'Not Found', details) {
-    super(message, details);
+class NotFoundError extends AppError {
+  constructor(message) {
+    super(message || 'Resource not found', 404);
+    this.name = 'NotFoundError';
   }
 }
 
-/**
- * 409 Conflict - Request could not be completed due to a conflict
- */
-class ConflictError extends APIError {
-  constructor(message = 'Conflict', details) {
-    super(message, details);
+class ConflictError extends AppError {
+  constructor(message) {
+    super(message || 'Resource conflict', 409);
+    this.name = 'ConflictError';
   }
 }
 
-/**
- * 422 Unprocessable Entity - Validation error
- */
-class ValidationError extends APIError {
-  constructor(message = 'Validation Error', details) {
-    super(message, details);
+class RateLimitError extends AppError {
+  constructor(message) {
+    super(message || 'Too many requests, please try again later', 429);
+    this.name = 'RateLimitError';
   }
 }
 
-/**
- * 500 Internal Server Error - Server error
- */
-class InternalServerError extends APIError {
-  constructor(message = 'Internal Server Error', details) {
-    super(message, details);
+class ServerError extends AppError {
+  constructor(message) {
+    super(message || 'Internal server error', 500);
+    this.name = 'ServerError';
   }
 }
 
-/**
- * 503 Service Unavailable - Service temporarily unavailable
- */
-class ServiceUnavailableError extends APIError {
-  constructor(message = 'Service Unavailable', details) {
-    super(message, details);
+class ExternalServiceError extends AppError {
+  constructor(message, service) {
+    super(message || `Error occurred with external service: ${service}`, 502);
+    this.name = 'ExternalServiceError';
+    this.service = service;
   }
 }
 
 module.exports = {
-  APIError,
-  BadRequestError,
-  UnauthorizedError,
-  ForbiddenError,
+  AppError,
+  ValidationError,
+  AuthenticationError,
+  AuthorizationError,
   NotFoundError,
   ConflictError,
-  ValidationError,
-  InternalServerError,
-  ServiceUnavailableError
+  RateLimitError,
+  ServerError,
+  ExternalServiceError
 };

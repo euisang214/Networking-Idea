@@ -1,60 +1,37 @@
-# Application Configuration
+# Application
 NODE_ENV=development
-FIRST_RUN=true
-
-# Backend API
-PORT=8000
-API_URL=http://localhost:8000
+PORT=5000
 FRONTEND_URL=http://localhost:3000
-CORS_ORIGIN=http://localhost:3000
 
-# Authentication
-JWT_SECRET=your_jwt_secret_here
-JWT_EXPIRATION=86400000
-REFRESH_TOKEN_SECRET=your_refresh_token_secret_here
-REFRESH_TOKEN_EXPIRATION=604800000
+# MongoDB
+MONGO_USERNAME=admin
+MONGO_PASSWORD=password
+MONGO_DATABASE=mentor-connect
+MONGODB_URI=mongodb://admin:password@mongodb:27017/mentor-connect?authSource=admin
 
-# Database
-DB_HOST=postgres
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_NAME=mentor_connect
-DATABASE_URL=postgres://postgres:postgres@postgres:5432/mentor_connect
+# JWT
+JWT_SECRET=your_jwt_secret_key
+JWT_EXPIRES_IN=7d
 
-# Redis
-REDIS_HOST=redis
-REDIS_PORT=6379
-REDIS_PASSWORD=
-
-# Stripe Payment Integration
+# Stripe
 STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
 STRIPE_WEBHOOK_SECRET=whsec_your_stripe_webhook_secret
-STRIPE_CONNECT_CLIENT_ID=ca_your_stripe_connect_client_id
-STRIPE_PLATFORM_FEE_PERCENT=10
+REACT_APP_STRIPE_PUBLIC_KEY=pk_test_your_stripe_public_key
 
-# SendGrid Email Integration
+# SendGrid
 SENDGRID_API_KEY=your_sendgrid_api_key
-SENDGRID_FROM_EMAIL=noreply@mentorconnect.com
-SENDGRID_WEBHOOK_KEY=your_sendgrid_webhook_key
+EMAIL_FROM=noreply@mentorconnect.com
+PLATFORM_EMAIL=referrals@mentorconnect.com
 
-# Zoom Integration
-ZOOM_CLIENT_ID=your_zoom_client_id
-ZOOM_CLIENT_SECRET=your_zoom_client_secret
-ZOOM_REDIRECT_URL=http://localhost:8000/api/zoom/callback
+# Zoom
+ZOOM_API_KEY=your_zoom_api_key
+ZOOM_API_SECRET=your_zoom_api_secret
+ZOOM_VERIFICATION_TOKEN=your_zoom_verification_token
 ZOOM_WEBHOOK_SECRET=your_zoom_webhook_secret
 
-# Logging
-LOG_LEVEL=info
-LOG_FILE_PATH=logs/
+# Business Rules
+PLATFORM_FEE_PERCENT=15
+REFERRAL_REWARD_AMOUNT=50
 
-# Rate Limiting
-RATE_LIMIT_WINDOW_MS=900000
-RATE_LIMIT_MAX=100
-
-# Security
-SSL_CERT_PATH=/etc/nginx/ssl/server.crt
-SSL_KEY_PATH=/etc/nginx/ssl/server.key
-
-# Referral System
-REFERRAL_REWARD_AMOUNT=10
+# React App
+REACT_APP_API_URL=http://localhost:5000/api

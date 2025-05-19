@@ -1,130 +1,128 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
-import { LockClosedIcon, MailIcon } from '@heroicons/react/outline';
-import { Input, Button, Spinner } from '../common';
-import useAuth from '../../hooks/useAuth';
+import { useAuth } from '../../hooks/useAuth';
+import { useForm } from '../../hooks/useForm';
+import Input from '../../common/Input';
+import Button from '../../common/Button';
 
 const LoginForm = () => {
-  const { login } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { login } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   
-  // Get the redirect path from location state or default to dashboard
-  const from = location.state?.from?.pathname || '/dashboard';
+  // Get redirect path from location state or default to home
+  const { from } = location.state || { from: { pathname: '/' } };
   
-  // Form validation schema
-  const validationSchema = Yup.object({
-    email: Yup.string()
-      .email('Invalid email address')
-      .required('Email is required'),
-    password: Yup.string()
-      .required('Password is required')
-      .min(8, 'Password must be at least 8 characters'),
-  });
-  
-  // Form initialization
-  const formik = useFormik({
-    initialValues: {
+  // Initialize form state with useForm hook
+  const { values, handleChange, handleSubmit, errors, validateForm } = useForm(
+    {
       email: '',
-      password: '',
+      password: ''
     },
-    validationSchema,
-    onSubmit: async (values) => {
-      setIsLoading(true);
-      try {
-        const result = await login(values);
-        if (result.success) {
-          // Redirect to the page the user was trying to access
-          navigate(from, { replace: true });
-        }
-      } catch (error) {
-        console.error('Login error:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-  });
+    handleLogin,
+    validateLogin
+  );
+  
+  // Form validation function
+  function validateLogin(values) {
+    const errors = {};
+    
+    if (!values.email) {
+      errors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(values.email)) {
+      errors.email = 'Email is invalid';
+    }
+    
+    if (!values.password) {
+      errors.password = 'Password is required';
+    }
+    
+    return errors;
+  }
+  
+  // Handle login submit
+  async function handleLogin() {
+    setError('');
+    setIsLoading(true);
+    
+    try {
+      await login(values.email, values.password);
+      
+      // Redirect to the page user tried to visit or home
+      navigate(from, { replace: true });
+    } catch (err) {
+      setError(err.response?.data?.message || 'An error occurred during login. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  }
   
   return (
-    <form className="space-y-6" onSubmit={formik.handleSubmit}>
-      <div>
+    <div className="max-w-md mx-auto">
+      <h2 className="text-2xl font-bold text-center mb-6">Sign in to your account</h2>
+      
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          {error}
+        </div>
+      )}
+      
+      {location.search === '?session=expired' && (
+        <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
+          Your session has expired. Please sign in again.
+        </div>
+      )}
+      
+      <form onSubmit={handleSubmit} className="space-y-6">
         <Input
-          id="email"
+          label="Email Address"
           name="email"
           type="email"
-          label="Email address"
-          placeholder="Enter your email"
-          value={formik.values.email}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          error={formik.touched.email && formik.errors.email}
-          disabled={isLoading}
+          value={values.email}
+          onChange={handleChange}
+          error={errors.email}
           required
-          icon={<MailIcon className="h-5 w-5 text-gray-400" />}
         />
-      </div>
-      
-      <div>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          label="Password"
-          placeholder="Enter your password"
-          value={formik.values.password}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          error={formik.touched.password && formik.errors.password}
-          disabled={isLoading}
-          required
-          icon={<LockClosedIcon className="h-5 w-5 text-gray-400" />}
-        />
-      </div>
-      
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <input
-            id="remember-me"
-            name="remember-me"
-            type="checkbox"
-            className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+        
+        <div>
+          <Input
+            label="Password"
+            name="password"
+            type="password"
+            value={values.password}
+            onChange={handleChange}
+            error={errors.password}
+            required
           />
-          <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-            Remember me
-          </label>
+          <div className="mt-1 text-right">
+            <Link to="/forgot-password" className="text-sm text-blue-600 hover:text-blue-800">
+              Forgot password?
+            </Link>
+          </div>
         </div>
         
-        <div className="text-sm">
-          <Link to="/forgot-password" className="font-medium text-primary-600 hover:text-primary-500">
-            Forgot your password?
-          </Link>
-        </div>
-      </div>
-      
-      <div>
         <Button
           type="submit"
           variant="primary"
           fullWidth
-          disabled={isLoading}
           isLoading={isLoading}
+          disabled={isLoading}
         >
           Sign in
         </Button>
-      </div>
+      </form>
       
-      <div className="text-center">
+      <div className="mt-6 text-center">
         <p className="text-sm text-gray-600">
           Don't have an account?{' '}
-          <Link to="/register" className="font-medium text-primary-600 hover:text-primary-500">
+          <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
             Sign up
           </Link>
         </p>
       </div>
-    </form>
+    </div>
   );
 };
 

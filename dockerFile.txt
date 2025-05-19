@@ -1,54 +1,34 @@
-FROM node:18-alpine as builder
-
-# Set working directory
+# Build stage for the frontend
+FROM node:16-alpine as frontend-build
 WORKDIR /app
-
-# Install dependencies for both frontend and backend
-COPY backend/package*.json ./backend/
-COPY frontend/package*.json ./frontend/
-
-# Install backend dependencies
-WORKDIR /app/backend
+COPY frontend/package*.json ./
 RUN npm ci
-
-# Install frontend dependencies
-WORKDIR /app/frontend
-RUN npm ci
-
-# Copy source code
-WORKDIR /app
-COPY . .
-
-# Build frontend
-WORKDIR /app/frontend
+COPY frontend/ ./
+ARG REACT_APP_API_URL
+ARG REACT_APP_STRIPE_PUBLIC_KEY
+ENV REACT_APP_API_URL=$REACT_APP_API_URL
+ENV REACT_APP_STRIPE_PUBLIC_KEY=$REACT_APP_STRIPE_PUBLIC_KEY
 RUN npm run build
 
-# Production stage
-FROM node:18-alpine
+# Backend stage
+FROM node:16-alpine
+WORKDIR /app
+
+# Copy backend package files
+COPY backend/package*.json ./
+RUN npm ci --production
+
+# Copy backend code
+COPY backend/ ./
+
+# Copy frontend build
+COPY --from=frontend-build /app/build ./public
 
 # Set environment variables
 ENV NODE_ENV=production
 
-# Create app directory
-WORKDIR /app
+# Expose the port
+EXPOSE 5000
 
-# Copy built frontend and backend code
-COPY --from=builder /app/backend ./backend
-COPY --from=builder /app/frontend/build ./frontend/build
-
-# Install only production dependencies for backend
-WORKDIR /app/backend
-RUN npm ci --only=production
-
-# Expose port
-EXPOSE 8000
-
-# Set working directory
-WORKDIR /app
-
-# Add startup script
-COPY docker-entrypoint.sh .
-RUN chmod +x docker-entrypoint.sh
-
-# Start app
-ENTRYPOINT ["./docker-entrypoint.sh"]
+# Run the application
+CMD ["node", "index.js"]

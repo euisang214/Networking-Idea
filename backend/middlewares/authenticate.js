@@ -1,51 +1,62 @@
-/**
- * Authentication middleware
- */
-const passport = require('passport');
-const { UnauthorizedError } = require('../utils/errorTypes');
+const jwt = require('jsonwebtoken');
+const User = require('../models/user');
+const { AuthenticationError } = require('../utils/errorTypes');
+const logger = require('../utils/logger');
 
 /**
- * Middleware to authenticate requests using JWT strategy
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- * @param {Function} next - Express next function
+ * Authentication middleware
+ * Verifies JWT token and attaches user to request
  */
-const authenticate = (req, res, next) => {
-  passport.authenticate('jwt', { session: false }, (err, user, info) => {
-    if (err) {
-      return next(err);
+const authenticate = async (req, res, next) => {
+  try {
+    // Get token from header
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new AuthenticationError('Authentication required');
     }
     
+    // Extract token
+    const token = authHeader.split(' ')[1];
+    
+    if (!token) {
+      throw new AuthenticationError('Authentication required');
+    }
+    
+    // Verify token
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (error) {
+      throw new AuthenticationError('Invalid or expired token');
+    }
+    
+    // Find user
+    const user = await User.findById(decoded.id).select('-password');
+    
     if (!user) {
-      return next(new UnauthorizedError(info ? info.message : 'Unauthorized'));
+      throw new AuthenticationError('User not found');
+    }
+    
+    // Check if user is active
+    if (!user.isActive) {
+      throw new AuthenticationError('Account is inactive');
     }
     
     // Attach user to request
-    req.user = user;
+    req.user = {
+      id: user._id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      userType: user.userType,
+      emailVerified: user.emailVerified
+    };
     
     next();
-  })(req, res, next);
-};
-
-/**
- * Middleware to restrict access based on user role
- * @param {string[]} roles - Array of allowed roles
- * @returns {Function} Express middleware
- */
-const authorize = (roles = []) => {
-  return (req, res, next) => {
-    if (!req.user) {
-      return next(new UnauthorizedError('Unauthorized - user not authenticated'));
-    }
-    
-    // Check if the user's role is in the allowed roles
-    if (roles.length && !roles.includes(req.user.role)) {
-      return next(new UnauthorizedError('Forbidden - insufficient permissions'));
-    }
-    
-    next();
-  };
+  } catch (error) {
+    next(error);
+  }
 };
 
 module.exports = authenticate;
-module.exports.authorize = authorize;

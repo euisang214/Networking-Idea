@@ -1,0 +1,171 @@
+const ProfessionalService = require('../services/professionalService');
+const PaymentService = require('../services/paymentService');
+const responseFormatter = require('../utils/responseFormatter');
+const { ValidationError, AuthorizationError } = require('../utils/errorTypes');
+const logger = require('../utils/logger');
+
+// Controller for professional-related operations
+const ProfessionalController = {
+  // Create professional profile
+  createProfile: async (req, res, next) => {
+    try {
+      const userId = req.user.id;
+      const profileData = req.body;
+      
+      // Validate required fields
+      if (!profileData.title || !profileData.hourlyRate || !profileData.yearsOfExperience) {
+        throw new ValidationError('Title, hourly rate, and years of experience are required');
+      }
+      
+      // Create profile
+      const profile = await ProfessionalService.createProfile(userId, profileData);
+      
+      return responseFormatter.created(res, {
+        profile
+      }, 'Professional profile created successfully');
+    } catch (error) {
+      next(error);
+    }
+  },
+  
+  // Get professional profile by ID
+  getProfile: async (req, res, next) => {
+    try {
+      const { profileId } = req.params;
+      const userId = req.user.id;
+      
+      // Get profile
+      const profile = await ProfessionalService.getProfileById(profileId);
+      
+      // Check if user is the profile owner to show private data
+      const showPrivate = profile.user._id.toString() === userId;
+      
+      // If not the owner, return anonymized profile only
+      if (!showPrivate) {
+        return responseFormatter.success(res, {
+          profile: {
+            _id: profile._id,
+            industry: profile.industry,
+            yearsOfExperience: profile.yearsOfExperience,
+            skills: profile.skills,
+            hourlyRate: profile.hourlyRate,
+            anonymizedProfile: profile.anonymizedProfile,
+            statistics: {
+              totalSessions: profile.statistics.totalSessions,
+              completedSessions: profile.statistics.completedSessions,
+              averageRating: profile.statistics.averageRating
+            }
+          }
+        });
+      }
+      
+      return responseFormatter.success(res, {
+        profile
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+  
+  // Get professional profile for current user
+  getOwnProfile: async (req, res, next) => {
+    try {
+      const userId = req.user.id;
+      
+      // Get profile
+      const profile = await ProfessionalService.getProfileByUserId(userId, true);
+      
+      return responseFormatter.success(res, {
+        profile
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+  
+  // Update professional profile
+  updateProfile: async (req, res, next) => {
+    try {
+      const { profileId } = req.params;
+      const userId = req.user.id;
+      const updateData = req.body;
+      
+      // Update profile
+      const profile = await ProfessionalService.updateProfile(profileId, userId, updateData);
+      
+      return responseFormatter.success(res, {
+        profile
+      }, 'Professional profile updated successfully');
+    } catch (error) {
+      next(error);
+    }
+  },
+  
+  // Search for professionals
+  searchProfessionals: async (req, res, next) => {
+    try {
+      const { industry, skills, minExperience, maxRate, page = 1, limit = 10 } = req.query;
+      
+      // Prepare filters
+      const filters = {};
+      
+      if (industry) filters.industry = industry;
+      if (skills) filters.skills = skills.split(',');
+      if (minExperience) filters.minExperience = minExperience;
+      if (maxRate) filters.maxRate = maxRate;
+      
+      // Search
+      const result = await ProfessionalService.searchProfessionals(
+        filters,
+        parseInt(limit),
+        (parseInt(page) - 1) * parseInt(limit)
+      );
+      
+      return responseFormatter.paginated(
+        res,
+        result.professionals,
+        parseInt(page),
+        parseInt(limit),
+        result.total,
+        'Professionals retrieved successfully'
+      );
+    } catch (error) {
+      next(error);
+    }
+  },
+  
+  // Get all available industries
+  getIndustries: async (req, res, next) => {
+    try {
+      const industries = await ProfessionalService.getIndustries();
+      
+      return responseFormatter.success(res, {
+        industries
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+  
+  // Create Stripe connected account for a professional
+  createConnectedAccount: async (req, res, next) => {
+    try {
+      const userId = req.user.id;
+      
+      // Get professional profile
+      const profile = await ProfessionalService.getProfileByUserId(userId, true);
+      
+      // Create connected account
+      const result = await PaymentService.createConnectedAccount(profile._id);
+      
+      return responseFormatter.success(res, {
+        accountId: result.accountId,
+        onboardingUrl: result.onboardingUrl
+      }, 'Stripe connected account created successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+};
+
+module.exports = ProfessionalController;

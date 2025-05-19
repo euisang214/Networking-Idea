@@ -1,260 +1,229 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
-import {
-  LockClosedIcon,
-  MailIcon,
-  UserIcon,
-  UserGroupIcon
-} from '@heroicons/react/outline';
-import { Input, Button, Spinner } from '../common';
-import useAuth from '../../hooks/useAuth';
+import { useForm } from '../../hooks/useForm';
+import AuthAPI from '../../api/auth';
+import Input from '../../common/Input';
+import Button from '../../common/Button';
 
 const RegisterForm = () => {
-  const { register } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [registerSuccess, setRegisterSuccess] = useState(false);
   
-  // Form validation schema
-  const validationSchema = Yup.object({
-    firstName: Yup.string().required('First name is required'),
-    lastName: Yup.string().required('Last name is required'),
-    email: Yup.string()
-      .email('Invalid email address')
-      .required('Email is required'),
-    password: Yup.string()
-      .required('Password is required')
-      .min(8, 'Password must be at least 8 characters')
-      .matches(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-        'Password must contain at least one uppercase letter, one lowercase letter, and one number'
-      ),
-    confirmPassword: Yup.string()
-      .oneOf([Yup.ref('password'), null], 'Passwords must match')
-      .required('Confirm password is required'),
-    role: Yup.string()
-      .oneOf(['seeker', 'professional'], 'Invalid role')
-      .required('Role is required'),
-    termsAccepted: Yup.boolean().oneOf(
-      [true],
-      'You must accept the terms and conditions'
-    ),
-  });
-  
-  // Form initialization
-  const formik = useFormik({
-    initialValues: {
+  // Initialize form state with useForm hook
+  const { values, handleChange, handleSubmit, errors } = useForm(
+    {
       firstName: '',
       lastName: '',
       email: '',
       password: '',
       confirmPassword: '',
-      role: 'seeker',
-      termsAccepted: false,
+      userType: 'candidate' // Default user type
     },
-    validationSchema,
-    onSubmit: async (values) => {
-      setIsLoading(true);
-      try {
-        // Transform form values to match API format
-        const userData = {
-          first_name: values.firstName,
-          last_name: values.lastName,
-          email: values.email,
-          password: values.password,
-          role: values.role,
-        };
-        
-        const result = await register(userData);
-        
-        if (result.success) {
-          // Redirect to dashboard or verification page
-          navigate('/dashboard');
-        }
-      } catch (error) {
-        console.error('Registration error:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-  });
+    handleRegister,
+    validateRegister
+  );
+  
+  // Form validation function
+  function validateRegister(values) {
+    const errors = {};
+    
+    if (!values.firstName) {
+      errors.firstName = 'First name is required';
+    }
+    
+    if (!values.lastName) {
+      errors.lastName = 'Last name is required';
+    }
+    
+    if (!values.email) {
+      errors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(values.email)) {
+      errors.email = 'Email is invalid';
+    }
+    
+    if (!values.password) {
+      errors.password = 'Password is required';
+    } else if (values.password.length < 8) {
+      errors.password = 'Password must be at least 8 characters';
+    }
+    
+    if (!values.confirmPassword) {
+      errors.confirmPassword = 'Please confirm your password';
+    } else if (values.password !== values.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match';
+    }
+    
+    return errors;
+  }
+  
+  // Handle register submit
+  async function handleRegister() {
+    setError('');
+    setIsLoading(true);
+    
+    try {
+      await AuthAPI.register({
+        firstName: values.firstName,
+        lastName: values.lastName,
+        email: values.email,
+        password: values.password,
+        userType: values.userType
+      });
+      
+      setRegisterSuccess(true);
+    } catch (err) {
+      setError(err.response?.data?.message || 'An error occurred during registration. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  }
+  
+  if (registerSuccess) {
+    return (
+      <div className="max-w-md mx-auto text-center">
+        <svg className="w-16 h-16 mx-auto text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <h2 className="text-2xl font-bold mt-4 mb-2">Registration Successful!</h2>
+        <p className="text-gray-600 mb-6">
+          Please check your email to verify your account. A verification link has been sent to {values.email}.
+        </p>
+        <Button variant="primary" onClick={() => navigate('/login')}>
+          Go to Login
+        </Button>
+      </div>
+    );
+  }
   
   return (
-    <form className="space-y-6" onSubmit={formik.handleSubmit}>
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <div>
+    <div className="max-w-md mx-auto">
+      <h2 className="text-2xl font-bold text-center mb-6">Create an account</h2>
+      
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          {error}
+        </div>
+      )}
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
-            id="firstName"
+            label="First Name"
             name="firstName"
             type="text"
-            label="First name"
-            placeholder="Enter your first name"
-            value={formik.values.firstName}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.firstName && formik.errors.firstName}
-            disabled={isLoading}
+            value={values.firstName}
+            onChange={handleChange}
+            error={errors.firstName}
             required
-            icon={<UserIcon className="h-5 w-5 text-gray-400" />}
+          />
+          
+          <Input
+            label="Last Name"
+            name="lastName"
+            type="text"
+            value={values.lastName}
+            onChange={handleChange}
+            error={errors.lastName}
+            required
           />
         </div>
         
-        <div>
-          <Input
-            id="lastName"
-            name="lastName"
-            type="text"
-            label="Last name"
-            placeholder="Enter your last name"
-            value={formik.values.lastName}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.lastName && formik.errors.lastName}
-            disabled={isLoading}
-            required
-            icon={<UserIcon className="h-5 w-5 text-gray-400" />}
-          />
-        </div>
-      </div>
-      
-      <div>
         <Input
-          id="email"
+          label="Email Address"
           name="email"
           type="email"
-          label="Email address"
-          placeholder="Enter your email"
-          value={formik.values.email}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          error={formik.touched.email && formik.errors.email}
-          disabled={isLoading}
+          value={values.email}
+          onChange={handleChange}
+          error={errors.email}
           required
-          icon={<MailIcon className="h-5 w-5 text-gray-400" />}
         />
-      </div>
-      
-      <div>
+        
         <Input
-          id="password"
+          label="Password"
           name="password"
           type="password"
-          label="Password"
-          placeholder="Enter your password"
-          value={formik.values.password}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          error={formik.touched.password && formik.errors.password}
-          disabled={isLoading}
+          value={values.password}
+          onChange={handleChange}
+          error={errors.password}
+          helpText="Must be at least 8 characters"
           required
-          icon={<LockClosedIcon className="h-5 w-5 text-gray-400" />}
-          helpText="Password must be at least 8 characters and contain uppercase, lowercase, and numbers."
         />
-      </div>
-      
-      <div>
+        
         <Input
-          id="confirmPassword"
+          label="Confirm Password"
           name="confirmPassword"
           type="password"
-          label="Confirm password"
-          placeholder="Confirm your password"
-          value={formik.values.confirmPassword}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          error={formik.touched.confirmPassword && formik.errors.confirmPassword}
-          disabled={isLoading}
+          value={values.confirmPassword}
+          onChange={handleChange}
+          error={errors.confirmPassword}
           required
-          icon={<LockClosedIcon className="h-5 w-5 text-gray-400" />}
         />
-      </div>
-      
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          I am a:
-        </label>
-        <div className="mt-2 space-y-4">
-          <div className="flex items-center">
-            <input
-              id="role-seeker"
-              name="role"
-              type="radio"
-              value="seeker"
-              checked={formik.values.role === 'seeker'}
-              onChange={formik.handleChange}
-              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
-            />
-            <label htmlFor="role-seeker" className="ml-3 block text-sm font-medium text-gray-700">
-              Job Seeker / Mentee (I'm looking for guidance)
+        
+        <div className="mt-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            I am registering as:
+          </label>
+          <div className="flex space-x-4">
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                name="userType"
+                value="candidate"
+                checked={values.userType === 'candidate'}
+                onChange={handleChange}
+                className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+              />
+              <span className="ml-2 text-gray-700">Candidate</span>
             </label>
-          </div>
-          <div className="flex items-center">
-            <input
-              id="role-professional"
-              name="role"
-              type="radio"
-              value="professional"
-              checked={formik.values.role === 'professional'}
-              onChange={formik.handleChange}
-              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
-            />
-            <label htmlFor="role-professional" className="ml-3 block text-sm font-medium text-gray-700">
-              Professional / Mentor (I want to offer guidance)
+            
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                name="userType"
+                value="professional"
+                checked={values.userType === 'professional'}
+                onChange={handleChange}
+                className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+              />
+              <span className="ml-2 text-gray-700">Professional</span>
             </label>
           </div>
         </div>
-        {formik.touched.role && formik.errors.role && (
-          <p className="mt-2 text-sm text-danger-600">{formik.errors.role}</p>
-        )}
-      </div>
-      
-      <div className="flex items-center">
-        <input
-          id="termsAccepted"
-          name="termsAccepted"
-          type="checkbox"
-          checked={formik.values.termsAccepted}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-        />
-        <label htmlFor="termsAccepted" className="ml-2 block text-sm text-gray-700">
-          I agree to the{' '}
-          <Link to="/terms" className="font-medium text-primary-600 hover:text-primary-500">
-            Terms and Conditions
+        
+        <div className="mt-4 text-sm text-gray-600">
+          By creating an account, you agree to our{' '}
+          <Link to="/terms" className="text-blue-600 hover:text-blue-500">
+            Terms of Service
           </Link>{' '}
           and{' '}
-          <Link to="/privacy" className="font-medium text-primary-600 hover:text-primary-500">
+          <Link to="/privacy" className="text-blue-600 hover:text-blue-500">
             Privacy Policy
           </Link>
-        </label>
-      </div>
-      {formik.touched.termsAccepted && formik.errors.termsAccepted && (
-        <p className="text-sm text-danger-600">{formik.errors.termsAccepted}</p>
-      )}
-      
-      <div>
+          .
+        </div>
+        
         <Button
           type="submit"
           variant="primary"
           fullWidth
-          disabled={isLoading}
           isLoading={isLoading}
+          disabled={isLoading}
         >
           Sign up
         </Button>
-      </div>
+      </form>
       
-      <div className="text-center">
+      <div className="mt-6 text-center">
         <p className="text-sm text-gray-600">
           Already have an account?{' '}
-          <Link to="/login" className="font-medium text-primary-600 hover:text-primary-500">
+          <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
             Sign in
           </Link>
         </p>
       </div>
-    </form>
+    </div>
   );
 };
 

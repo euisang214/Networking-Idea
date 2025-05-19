@@ -1,329 +1,388 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
-import DatePicker from 'react-datepicker';
-import "react-datepicker/dist/react-datepicker.css";
-import { 
-  ClockIcon, 
-  CalendarIcon, 
-  ChatAlt2Icon,
-  CurrencyDollarIcon 
-} from '@heroicons/react/outline';
-import { Card, Button, Input, Spinner } from '../common';
-import { addDays, format, setHours, setMinutes } from 'date-fns';
+import SessionsAPI from '../../api/sessions';
+import PaymentsAPI from '../../api/payments';
+import Button from '../common/Button';
+import SessionCalendar from './SessionCalendar';
+import Spinner from '../common/Spinner';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
-const BookingForm = ({ professional, onSubmit, isLoading }) => {
+// Initialize Stripe
+const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
+
+// Booking form component
+const BookingForm = ({ professional, onCancel }) => {
   const navigate = useNavigate();
-  const [availableSlots, setAvailableSlots] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(addDays(new Date(), 1));
-  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
+  const [notes, setNotes] = useState('');
+  const [step, setStep] = useState(1); // 1: Select date/time, 2: Payment
+  const [sessionId, setSessionId] = useState(null);
   
-  // Calculate session cost based on duration and hourly rate
-  const calculateCost = (durationMinutes) => {
-    if (!professional || !professional.hourly_rate) return 0;
-    return (professional.hourly_rate * (durationMinutes / 60)).toFixed(2);
+  const handleDateSelect = (date) => {
+    setSelectedDate(date);
+    setSelectedTimeSlot(null);
   };
   
-  // Validation schema
-  const validationSchema = Yup.object({
-    date: Yup.date().required('Date is required'),
-    time: Yup.string().required('Time is required'),
-    duration: Yup.number()
-      .required('Duration is required')
-      .oneOf([30, 60, 90], 'Invalid duration'),
-    topic: Yup.string()
-      .required('Topic is required')
-      .max(300, 'Topic must be less than 300 characters'),
-  });
+  const handleTimeSlotSelect = (slot) => {
+    setSelectedTimeSlot(slot);
+  };
   
-  // Initialize form
-  const formik = useFormik({
-    initialValues: {
-      date: selectedDate,
-      time: '',
-      duration: 30,
-      topic: '',
-    },
-    validationSchema,
-    onSubmit: (values) => {
-      const dateTime = new Date(values.date);
-      const [hours, minutes] = values.time.split(':');
-      dateTime.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
-      
-      // Calculate total cost
-      const cost = calculateCost(values.duration);
-      
-      onSubmit({
-        professional_id: professional.id,
-        scheduled_at: dateTime.toISOString(),
-        duration_minutes: values.duration,
-        topic: values.topic,
-        cost
-      });
-    },
-  });
+  const handleNotesChange = (e) => {
+    setNotes(e.target.value);
+  };
   
-  // Fetch available slots when date changes
-  useEffect(() => {
-    const fetchAvailableSlots = async () => {
-      if (!professional || !selectedDate) return;
-      
-      setIsLoadingSlots(true);
-      
-      try {
-        // In a real application, this would call your API
-        // For demo purposes, we'll generate some fake available slots
-        // Replace this with actual API call
-        const tomorrow = addDays(new Date(), 1);
-        const dayOfWeek = selectedDate.getDay();
-        
-        // Simulate API response delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Generate fake slots based on day of week
-        let slots = [];
-        if (dayOfWeek >= 1 && dayOfWeek <= 5) { // Weekdays
-          slots = [
-            '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-            '13:00', '13:30', '14:00', '14:30', '15:00', '15:30',
-            '16:00', '16:30', '17:00'
-          ];
-        } else { // Weekend
-          slots = [
-            '10:00', '10:30', '11:00', '11:30',
-            '13:00', '13:30', '14:00'
-          ];
-        }
-        
-        // Randomly remove some slots to simulate unavailability
-        slots = slots.filter(() => Math.random() > 0.3);
-        
-        setAvailableSlots(slots);
-        
-        // If there are available slots, set the first one as default
-        if (slots.length > 0 && !formik.values.time) {
-          formik.setFieldValue('time', slots[0]);
-        }
-      } catch (error) {
-        console.error('Error fetching available slots:', error);
-        setAvailableSlots([]);
-      } finally {
-        setIsLoadingSlots(false);
-      }
-    };
+  const handleContinue = async () => {
+    if (!selectedDate || !selectedTimeSlot) {
+      setError('Please select a date and time slot');
+      return;
+    }
     
-    fetchAvailableSlots();
-  }, [selectedDate, professional, formik.values.time]);
+    setError('');
+    setLoading(true);
+    
+    try {
+      // Create session reservation
+      const startTime = new Date(selectedDate);
+      startTime.setHours(selectedTimeSlot.hour, selectedTimeSlot.minute, 0, 0);
+      
+      const endTime = new Date(startTime);
+      endTime.setMinutes(endTime.getMinutes() + (professional.sessionSettings?.defaultSessionLength || 30));
+      
+      const session = await SessionsAPI.createSession({
+        professionalId: professional._id,
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        notes
+      });
+      
+      setSessionId(session._id);
+      setStep(2); // Move to payment step
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to book session. Please try again.');
+      console.error('Error creating session:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
   
-  // Handle date change
-  const handleDateChange = (date) => {
-    setSelectedDate(date);
-    formik.setFieldValue('date', date);
-    formik.setFieldValue('time', '');
+  const handleBack = () => {
+    if (step === 2) {
+      setStep(1);
+    } else {
+      onCancel();
+    }
+  };
+  
+  // Calculate session cost
+  const calculateSessionCost = () => {
+    if (!selectedTimeSlot) return 0;
+    
+    const sessionLengthHours = (professional.sessionSettings?.defaultSessionLength || 30) / 60;
+    return professional.hourlyRate * sessionLengthHours;
   };
   
   return (
-    <Card>
-      <h3 className="text-lg font-medium text-gray-900">Book a Session</h3>
-      <p className="mt-1 text-sm text-gray-500">
-        Schedule a virtual session with {professional?.first_name} {professional?.last_name}.
-      </p>
-      
-      {professional && (
-        <div className="mt-4 flex items-center justify-between p-3 bg-gray-50 rounded-md">
-          <div className="flex items-center">
-            <img
-              className="h-10 w-10 rounded-full object-cover"
-              src={professional.profile_picture || '/images/default-avatar.png'}
-              alt={`${professional.first_name} ${professional.last_name}`}
+    <div>
+      {step === 1 ? (
+        // Step 1: Select date and time
+        <>
+          <div className="mb-4">
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Select a Date</h3>
+            <SessionCalendar 
+              professional={professional}
+              selectedDate={selectedDate}
+              onDateSelect={handleDateSelect}
             />
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-900">
-                {professional.first_name} {professional.last_name}
-              </p>
-              <p className="text-xs text-gray-500">{professional.job_title}</p>
+          </div>
+          
+          {selectedDate && (
+            <div className="mb-4">
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Select a Time Slot</h3>
+              <div className="grid grid-cols-3 gap-2">
+                {generateTimeSlots(professional, selectedDate).map((slot, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    className={`py-2 px-4 text-center rounded-md ${
+                      selectedTimeSlot && 
+                      selectedTimeSlot.hour === slot.hour && 
+                      selectedTimeSlot.minute === slot.minute
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                    }`}
+                    onClick={() => handleTimeSlotSelect(slot)}
+                    disabled={!slot.available}
+                  >
+                    {formatTime(slot.hour, slot.minute)}
+                  </button>
+                ))}
+              </div>
             </div>
+          )}
+          
+          <div className="mb-4">
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Session Notes</h3>
+            <textarea
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              rows="3"
+              placeholder="What would you like to discuss? Any specific questions or topics?"
+              value={notes}
+              onChange={handleNotesChange}
+            ></textarea>
           </div>
-          <div className="text-right">
-            <p className="text-sm font-medium text-gray-900">
-              ${professional.hourly_rate}/hour
-            </p>
+          
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+              {error}
+            </div>
+          )}
+          
+          {selectedTimeSlot && (
+            <div className="mb-4 p-4 bg-gray-50 rounded-md">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="font-medium text-gray-900">Session Summary</p>
+                  <p className="text-gray-600">
+                    {formatDate(selectedDate)} at {formatTime(selectedTimeSlot.hour, selectedTimeSlot.minute)}
+                  </p>
+                  <p className="text-gray-600">
+                    {professional.sessionSettings?.defaultSessionLength || 30} minutes with {professional.anonymizedProfile.displayName}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-gray-600">Total</p>
+                  <p className="text-xl font-bold text-gray-900">
+                    ${calculateSessionCost().toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <div className="flex justify-between mt-6">
+            <Button variant="light" onClick={handleBack}>
+              Cancel
+            </Button>
+            <Button 
+              variant="primary" 
+              onClick={handleContinue} 
+              disabled={!selectedTimeSlot || loading}
+              isLoading={loading}
+            >
+              Continue to Payment
+            </Button>
           </div>
+        </>
+      ) : (
+        // Step 2: Payment
+        <Elements stripe={stripePromise}>
+          <PaymentForm 
+            sessionId={sessionId} 
+            amount={calculateSessionCost()}
+            onBack={handleBack}
+            onSuccess={() => navigate('/sessions')}
+          />
+        </Elements>
+      )}
+    </div>
+  );
+};
+
+// Payment form component
+const PaymentForm = ({ sessionId, amount, onBack, onSuccess }) => {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [error, setError] = useState('');
+  const [processing, setProcessing] = useState(false);
+  const [succeeded, setSucceeded] = useState(false);
+  
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!stripe || !elements) {
+      // Stripe.js has not loaded yet
+      return;
+    }
+    
+    setError('');
+    setProcessing(true);
+    
+    try {
+      // Create payment method
+      const { error, paymentMethod } = await stripe.createPaymentMethod({
+        type: 'card',
+        card: elements.getElement(CardElement)
+      });
+      
+      if (error) {
+        setError(error.message);
+        setProcessing(false);
+        return;
+      }
+      
+      // Process payment
+      const result = await PaymentsAPI.processSessionPayment(
+        sessionId,
+        paymentMethod.id
+      );
+      
+      if (result.success) {
+        setSucceeded(true);
+        setTimeout(() => {
+          onSuccess();
+        }, 1500);
+      } else {
+        setError('Payment failed. Please try again.');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Payment failed. Please try again.');
+      console.error('Error processing payment:', err);
+    } finally {
+      setProcessing(false);
+    }
+  };
+  
+  return (
+    <form onSubmit={handleSubmit}>
+      <h3 className="text-lg font-medium text-gray-900 mb-4">Payment Details</h3>
+      
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Card Information
+        </label>
+        <div className="border border-gray-300 rounded-md p-3 focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500">
+          <CardElement 
+            options={{
+              style: {
+                base: {
+                  fontSize: '16px',
+                  color: '#424770',
+                  '::placeholder': {
+                    color: '#aab7c4',
+                  },
+                },
+                invalid: {
+                  color: '#9e2146',
+                },
+              },
+            }}
+          />
+        </div>
+      </div>
+      
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          {error}
         </div>
       )}
       
-      <form onSubmit={formik.handleSubmit} className="mt-6 space-y-6">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          {/* Date picker */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Date
-            </label>
-            <div className="mt-1 relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <CalendarIcon className="h-5 w-5 text-gray-400" />
-              </div>
-              <DatePicker
-                selected={formik.values.date}
-                onChange={handleDateChange}
-                minDate={addDays(new Date(), 1)}
-                maxDate={addDays(new Date(), 30)}
-                dateFormat="MMMM d, yyyy"
-                className={`block w-full pl-10 pr-3 py-2 border ${
-                  formik.touched.date && formik.errors.date
-                    ? 'border-danger-300 text-danger-900 focus:ring-danger-500 focus:border-danger-500'
-                    : 'border-gray-300 focus:ring-primary-500 focus:border-primary-500'
-                } rounded-md shadow-sm focus:outline-none sm:text-sm`}
-              />
-            </div>
-            {formik.touched.date && formik.errors.date && (
-              <p className="mt-2 text-sm text-danger-600">{formik.errors.date}</p>
-            )}
-          </div>
-          
-          {/* Time slots */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Time
-            </label>
-            <div className="mt-1 relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <ClockIcon className="h-5 w-5 text-gray-400" />
-              </div>
-              <select
-                name="time"
-                value={formik.values.time}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className={`block w-full pl-10 pr-3 py-2 border ${
-                  formik.touched.time && formik.errors.time
-                    ? 'border-danger-300 text-danger-900 focus:ring-danger-500 focus:border-danger-500'
-                    : 'border-gray-300 focus:ring-primary-500 focus:border-primary-500'
-                } rounded-md shadow-sm focus:outline-none sm:text-sm`}
-                disabled={isLoadingSlots || availableSlots.length === 0}
-              >
-                {isLoadingSlots ? (
-                  <option value="">Loading slots...</option>
-                ) : availableSlots.length === 0 ? (
-                  <option value="">No slots available</option>
-                ) : (
-                  <>
-                    <option value="">Select a time</option>
-                    {availableSlots.map((slot) => (
-                      <option key={slot} value={slot}>
-                        {slot}
-                      </option>
-                    ))}
-                  </>
-                )}
-              </select>
-            </div>
-            {formik.touched.time && formik.errors.time && (
-              <p className="mt-2 text-sm text-danger-600">{formik.errors.time}</p>
-            )}
-          </div>
+      {succeeded && (
+        <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+          Payment successful! Redirecting to your sessions...
         </div>
-        
-        {/* Duration */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Duration
-          </label>
-          <div className="mt-1 grid grid-cols-3 gap-3">
-            {[30, 60, 90].map((duration) => (
-              <div key={duration}>
-                <input
-                  type="radio"
-                  id={`duration-${duration}`}
-                  name="duration"
-                  value={duration}
-                  checked={formik.values.duration === duration}
-                  onChange={() => formik.setFieldValue('duration', duration)}
-                  className="sr-only"
-                />
-                <label
-                  htmlFor={`duration-${duration}`}
-                  className={`flex items-center justify-center px-3 py-2 border rounded-md shadow-sm text-sm font-medium cursor-pointer ${
-                    formik.values.duration === duration
-                      ? 'bg-primary-600 text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  {duration} minutes ${calculateCost(duration)}
-                </label>
-              </div>
-            ))}
-          </div>
-          {formik.touched.duration && formik.errors.duration && (
-            <p className="mt-2 text-sm text-danger-600">{formik.errors.duration}</p>
-          )}
+      )}
+      
+      <div className="mb-4 p-4 bg-gray-50 rounded-md">
+        <div className="flex justify-between items-center">
+          <p className="font-medium text-gray-900">Total Amount</p>
+          <p className="text-xl font-bold text-gray-900">
+            ${amount.toFixed(2)}
+          </p>
         </div>
-        
-        {/* Topic */}
-        <div>
-          <Input
-            id="topic"
-            name="topic"
-            type="text"
-            label="What would you like to discuss?"
-            placeholder="Enter the topics you want to discuss in this session"
-            value={formik.values.topic}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.topic && formik.errors.topic}
-            required
-            icon={<ChatAlt2Icon className="h-5 w-5 text-gray-400" />}
-          />
-        </div>
-        
-        {/* Summary */}
-        <div className="pt-4 border-t border-gray-200">
-          <h4 className="text-base font-medium text-gray-900">Session Summary</h4>
-          <div className="mt-2 space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Duration:</span>
-              <span className="text-gray-900 font-medium">
-                {formik.values.duration} minutes
-              </span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Rate:</span>
-              <span className="text-gray-900 font-medium">
-                ${professional?.hourly_rate}/hour
-              </span>
-            </div>
-            <div className="flex justify-between text-sm font-medium">
-              <span className="text-gray-900">Total:</span>
-              <span className="text-primary-600">
-                ${calculateCost(formik.values.duration)}
-              </span>
-            </div>
-          </div>
-        </div>
-        
-        {/* Submit button */}
-        <div className="flex justify-end space-x-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => navigate(-1)}
-            disabled={isLoading}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={isLoading || isLoadingSlots || !formik.values.time || !formik.isValid}
-            isLoading={isLoading}
-          >
-            Book Session
-          </Button>
-        </div>
-      </form>
-    </Card>
+      </div>
+      
+      <div className="flex justify-between mt-6">
+        <Button 
+          type="button" 
+          variant="light" 
+          onClick={onBack}
+          disabled={processing || succeeded}
+        >
+          Back
+        </Button>
+        <Button 
+          type="submit" 
+          variant="primary"
+          isLoading={processing}
+          disabled={!stripe || processing || succeeded}
+        >
+          {processing ? 'Processing...' : succeeded ? 'Payment Successful' : `Pay $${amount.toFixed(2)}`}
+        </Button>
+      </div>
+    </form>
   );
+};
+
+// Helper functions
+const generateTimeSlots = (professional, date) => {
+  // This is a simplified version - in a real app, you'd check the professional's availability
+  // and existing bookings to generate available time slots
+  const slots = [];
+  const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'lowercase' });
+  
+  // Find availability for the selected day
+  const dayAvailability = professional.availability.find(a => a.day === dayOfWeek);
+  
+  if (!dayAvailability) {
+    return slots;
+  }
+  
+  // Parse start and end times
+  const [startHour, startMinute] = dayAvailability.startTime.split(':').map(Number);
+  const [endHour, endMinute] = dayAvailability.endTime.split(':').map(Number);
+  
+  // Generate slots in 30-minute increments
+  for (let hour = startHour; hour <= endHour; hour++) {
+    for (let minute of [0, 30]) {
+      // Skip if before start time or after end time
+      if (
+        (hour === startHour && minute < startMinute) ||
+        (hour === endHour && minute > endMinute)
+      ) {
+        continue;
+      }
+      
+      slots.push({
+        hour,
+        minute,
+        available: true // In a real app, check against existing bookings
+      });
+    }
+  }
+  
+  return slots;
+};
+
+const formatTime = (hour, minute) => {
+  const period = hour >= 12 ? 'PM' : 'AM';
+  const formattedHour = hour % 12 || 12;
+  const formattedMinute = minute.toString().padStart(2, '0');
+  return `${formattedHour}:${formattedMinute} ${period}`;
+};
+
+const formatDate = (date) => {
+  return new Date(date).toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
+BookingForm.propTypes = {
+  professional: PropTypes.object.isRequired,
+  onCancel: PropTypes.func.isRequired
+};
+
+PaymentForm.propTypes = {
+  sessionId: PropTypes.string.isRequired,
+  amount: PropTypes.number.isRequired,
+  onBack: PropTypes.func.isRequired,
+  onSuccess: PropTypes.func.isRequired
 };
 
 export default BookingForm;

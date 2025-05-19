@@ -1,195 +1,104 @@
-import React, { Fragment, useRef, useEffect } from 'react';
-import { Dialog, Transition } from '@headlessui/react';
-import { XIcon } from '@heroicons/react/outline';
+import React, { useEffect, useRef } from 'react';
+import PropTypes from 'prop-types';
 import Button from './Button';
 
-/**
- * Modal component using Headless UI Dialog
- * @param {Object} props - Component props
- * @param {boolean} props.isOpen - Whether the modal is open
- * @param {function} props.onClose - Function to call when the modal is closed
- * @param {string} [props.title] - Modal title
- * @param {React.ReactNode} props.children - Modal content
- * @param {string} [props.size='md'] - Modal size (sm, md, lg, xl, full)
- * @param {boolean} [props.showCloseButton=true] - Whether to show the close button
- * @param {boolean} [props.closeOnOverlayClick=true] - Whether to close the modal when clicking outside
- * @param {React.ReactNode} [props.footer] - Modal footer content
- * @param {string} [props.className] - Additional CSS classes
- * @returns {React.ReactElement} - Modal component
- */
-const Modal = ({
-  isOpen,
-  onClose,
-  title,
-  children,
-  size = 'md',
-  showCloseButton = true,
-  closeOnOverlayClick = true,
+const Modal = ({ 
+  isOpen, 
+  onClose, 
+  title, 
+  children, 
   footer,
-  className = '',
+  size = 'md',
+  closeOnOutsideClick = true,
+  showCloseButton = true
 }) => {
-  const initialFocusRef = useRef(null);
+  const modalRef = useRef(null);
   
-  // Size classes
-  const sizeClasses = {
-    sm: 'sm:max-w-sm',
-    md: 'sm:max-w-md',
-    lg: 'sm:max-w-lg',
-    xl: 'sm:max-w-xl',
-    '2xl': 'sm:max-w-2xl',
-    '3xl': 'sm:max-w-3xl',
-    '4xl': 'sm:max-w-4xl',
-    '5xl': 'sm:max-w-5xl',
-    '6xl': 'sm:max-w-6xl',
-    '7xl': 'sm:max-w-7xl',
-    full: 'sm:max-w-full sm:h-screen',
-  };
-  
-  // Handle escape key
+  // Close on ESC key press
   useEffect(() => {
-    const handleEscape = (event) => {
-      if (event.key === 'Escape') {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) {
         onClose();
       }
     };
     
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-    }
+    document.addEventListener('keydown', handleKeyDown);
     
     return () => {
-      document.removeEventListener('keydown', handleEscape);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen, onClose]);
   
+  // Handle outside click
+  const handleOutsideClick = (e) => {
+    if (closeOnOutsideClick && modalRef.current && !modalRef.current.contains(e.target)) {
+      onClose();
+    }
+  };
+  
+  // Size classes
+  const sizeClasses = {
+    sm: 'max-w-md',
+    md: 'max-w-lg',
+    lg: 'max-w-2xl',
+    xl: 'max-w-4xl',
+    full: 'max-w-full mx-5'
+  };
+  
+  if (!isOpen) return null;
+  
   return (
-    <Transition appear show={isOpen} as={Fragment}>
-      <Dialog
-        as="div"
-        className="fixed inset-0 z-50 overflow-y-auto"
-        onClose={closeOnOverlayClick ? onClose : () => {}}
-        initialFocus={initialFocusRef}
+    <div 
+      className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4"
+      onClick={handleOutsideClick}
+    >
+      <div 
+        ref={modalRef}
+        className={`bg-white rounded-lg shadow-xl w-full ${sizeClasses[size]} transition-all transform`}
+        role="dialog"
+        aria-modal="true"
       >
-        <div className="min-h-screen px-4 text-center">
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
-            <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" />
-          </Transition.Child>
-          
-          {/* This element is to trick the browser into centering the modal contents. */}
-          <span
-            className="inline-block h-screen align-middle"
-            aria-hidden="true"
-          >
-            &#8203;
-          </span>
-          
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0 scale-95"
-            enterTo="opacity-100 scale-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100 scale-100"
-            leaveTo="opacity-0 scale-95"
-          >
-            <div
-              className={`inline-block w-full ${sizeClasses[size]} p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-lg ${className}`}
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+          <h3 className="text-lg font-medium text-gray-900">{title}</h3>
+          {showCloseButton && (
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-500 focus:outline-none"
+              aria-label="Close"
             >
-              <div className="flex items-start justify-between">
-                {title && (
-                  <Dialog.Title
-                    as="h3"
-                    className="text-lg font-medium leading-6 text-gray-900"
-                    ref={initialFocusRef}
-                  >
-                    {title}
-                  </Dialog.Title>
-                )}
-                
-                {showCloseButton && (
-                  <div className="ml-3 h-7 flex items-center">
-                    <button
-                      type="button"
-                      className="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      onClick={onClose}
-                    >
-                      <span className="sr-only">Close</span>
-                      <XIcon className="h-6 w-6" aria-hidden="true" />
-                    </button>
-                  </div>
-                )}
-              </div>
-              
-              <div className="mt-4">{children}</div>
-              
-              {footer && <div className="mt-6">{footer}</div>}
-            </div>
-          </Transition.Child>
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
         </div>
-      </Dialog>
-    </Transition>
+        
+        {/* Body */}
+        <div className="px-6 py-4">
+          {children}
+        </div>
+        
+        {/* Footer */}
+        {footer && (
+          <div className="px-6 py-3 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3">
+            {footer}
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 
-/**
- * Confirmation modal with Yes/No buttons
- * @param {Object} props - Component props
- * @param {boolean} props.isOpen - Whether the modal is open
- * @param {function} props.onClose - Function to call when the modal is closed
- * @param {string} props.title - Modal title
- * @param {React.ReactNode} props.children - Modal content
- * @param {function} props.onConfirm - Function to call when the user confirms
- * @param {string} [props.confirmText='Yes'] - Confirm button text
- * @param {string} [props.cancelText='No'] - Cancel button text
- * @param {string} [props.confirmVariant='danger'] - Confirm button variant
- * @param {boolean} [props.isLoading=false] - Whether the confirm button is loading
- * @returns {React.ReactElement} - Confirmation modal component
- */
-export const ConfirmationModal = ({
-  isOpen,
-  onClose,
-  title,
-  children,
-  onConfirm,
-  confirmText = 'Yes',
-  cancelText = 'No',
-  confirmVariant = 'danger',
-  isLoading = false,
-}) => {
-  const footer = (
-    <div className="flex justify-end space-x-4">
-      <Button variant="outline" onClick={onClose} disabled={isLoading}>
-        {cancelText}
-      </Button>
-      <Button
-        variant={confirmVariant}
-        onClick={onConfirm}
-        isLoading={isLoading}
-      >
-        {confirmText}
-      </Button>
-    </div>
-  );
-  
-  return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={title}
-      footer={footer}
-      size="sm"
-    >
-      {children}
-    </Modal>
-  );
+Modal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  title: PropTypes.string.isRequired,
+  children: PropTypes.node.isRequired,
+  footer: PropTypes.node,
+  size: PropTypes.oneOf(['sm', 'md', 'lg', 'xl', 'full']),
+  closeOnOutsideClick: PropTypes.bool,
+  showCloseButton: PropTypes.bool
 };
 
 export default Modal;
