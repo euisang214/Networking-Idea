@@ -3,6 +3,7 @@ const router = express.Router();
 const ProfessionalController = require('../controllers/professionalController');
 const authenticate = require('../middlewares/authenticate');
 const { validators, validate } = require('../utils/validators');
+const rolesAllowed = require('../middlewares/rolesAllowed');
 
 // Public routes
 router.get('/search', ProfessionalController.searchProfessionals);
@@ -11,6 +12,7 @@ router.get('/:profileId', validators.professionalId, validate, ProfessionalContr
 
 // Protected routes
 router.use(authenticate);
+router.use(rolesAllowed(['professional']));
 
 // Create professional profile
 router.post('/', [
