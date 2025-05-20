@@ -5,6 +5,11 @@ const ReferralService = require('../services/referralService');
 const logger = require('../utils/logger');
 const responseFormatter = require('../utils/responseFormatter');
 const { ExternalServiceError } = require('../utils/errorTypes');
+const { verifySendGridSignature } = require('../utils/signatureUtils');
+const Ajv = require('ajv');
+const eventSchema = require('../schemas/sendgridEventSchema.json');
+const ajv = new Ajv();
+const validateEvents = ajv.compile(eventSchema);
 
 // Handle email parsing for referral verification
 const handleReferralEmail = async (emailData) => {
@@ -100,47 +105,49 @@ router.post('/inbound', async (req, res) => {
 router.post('/events', async (req, res) => {
   try {
     logger.info('Received email events webhook from SendGrid');
-    
+
+    if (!verifySendGridSignature(req, process.env.SENDGRID_WEBHOOK_SECRET)) {
+      logger.warn('Invalid SendGrid signature');
+      return responseFormatter.error(res, 'Invalid signature', 401);
+    }
+
     const events = req.body;
-    
+
+    if (!validateEvents(events)) {
+      logger.warn('Invalid SendGrid event payload');
+      return responseFormatter.validationError(res, validateEvents.errors);
+    }
+
     if (Array.isArray(events)) {
       // Process events
       events.forEach(event => {
         const eventType = event.event;
         const emailId = event.sg_message_id;
-        
+
         logger.debug(`SendGrid event ${eventType} for message ${emailId}`);
-        
+
         // Handle different event types
         switch (eventType) {
           case 'delivered':
-            // Email was delivered
             break;
           case 'open':
-            // Email was opened
             break;
           case 'click':
-            // Link in email was clicked
             break;
           case 'bounce':
-            // Email bounced
             break;
           case 'dropped':
-            // Email was dropped
             break;
           case 'spamreport':
-            // Email was reported as spam
             break;
           case 'unsubscribe':
-            // Recipient unsubscribed
             break;
           default:
-            // Other event
             break;
         }
       });
     }
-    
+
     // Always return 200 to SendGrid
     return responseFormatter.success(res, { processed: true });
   } catch (error) {
