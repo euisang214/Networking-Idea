@@ -142,13 +142,8 @@ class ZoomService {
 
   // Verify webhook signature
   verifyWebhookSignature(request) {
-    const message = `v0:${request.headers['x-zm-request-timestamp']}:${JSON.stringify(request.body)}`;
-    const hashForVerify = crypto.createHmac('sha256', this.webhookSecret)
-      .update(message)
-      .digest('hex');
-    
-    const signature = `v0=${hashForVerify}`;
-    return signature === request.headers['x-zm-signature'];
+    const { verifyZoomSignature } = require('../utils/signatureUtils');
+    return verifyZoomSignature(request, this.webhookSecret);
   }
 
   // Generate a random password for Zoom meetings

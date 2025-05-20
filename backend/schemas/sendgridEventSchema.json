@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "event": { "type": "string" },
+      "email": { "type": "string", "format": "email" },
+      "sg_message_id": { "type": "string" }
+    },
+    "required": ["event", "sg_message_id"],
+    "additionalProperties": true
+  }
+}

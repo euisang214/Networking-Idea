@@ -20,6 +20,7 @@ REACT_APP_STRIPE_PUBLIC_KEY=pk_test_your_stripe_public_key
 
 # SendGrid
 SENDGRID_API_KEY=your_sendgrid_api_key
+SENDGRID_WEBHOOK_SECRET=your_sendgrid_webhook_secret
 EMAIL_FROM=noreply@mentorconnect.com
 PLATFORM_EMAIL=referrals@mentorconnect.com
 
