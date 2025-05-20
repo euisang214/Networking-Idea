@@ -70,6 +70,7 @@ referralSchema.index({ professional: 1, createdAt: -1 });
 referralSchema.index({ candidate: 1 });
 referralSchema.index({ 'emailDetails.referralEmailId': 1 });
 referralSchema.index({ status: 1, emailDomainVerified: 1 });
+referralSchema.index({ professional: 1, status: 1, payoutDate: -1 });
 
 // Methods
 referralSchema.methods.verifyEmailDomains = function() {

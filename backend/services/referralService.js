@@ -6,6 +6,9 @@ const EmailService = require('./emailService');
 const PaymentService = require('./paymentService');
 const logger = require('../utils/logger');
 
+const MAX_REWARD_PER_PRO = parseInt(process.env.MAX_REWARD_PER_PRO || '0', 10);
+const COOLDOWN_DAYS = parseInt(process.env.COOLDOWN_DAYS || '0', 10);
+
 class ReferralService {
   // Create a new referral record from parsed email
   async createReferralFromEmail(emailDetails) {
@@ -212,9 +215,39 @@ class ReferralService {
           throw new Error('Email domains do not match');
         }
         
-        referral.emailDomainVerified = true;
+      referral.emailDomainVerified = true;
+    }
+
+      // Check reward caps before marking verified
+      if (MAX_REWARD_PER_PRO > 0) {
+        const rewardedCount = await Referral.countDocuments({
+          professional: referral.professional,
+          status: 'rewarded'
+        });
+        if (rewardedCount >= MAX_REWARD_PER_PRO) {
+          logger.info(`Referral cap reached for professional ${referral.professional}`);
+          referral.status = 'rejected';
+          await referral.save();
+          return referral;
+        }
       }
-      
+
+      if (COOLDOWN_DAYS > 0) {
+        const lastReward = await Referral.findOne({
+          professional: referral.professional,
+          status: 'rewarded'
+        }).sort({ payoutDate: -1 });
+        if (lastReward && lastReward.payoutDate) {
+          const diffDays = (Date.now() - lastReward.payoutDate.getTime()) / (86400000);
+          if (diffDays < COOLDOWN_DAYS) {
+            logger.info(`Referral cooldown active for professional ${referral.professional}`);
+            referral.status = 'pending';
+            await referral.save();
+            return referral;
+          }
+        }
+      }
+
       referral.status = 'verified';
       referral.verificationDetails = {
         verifiedAt: new Date(),

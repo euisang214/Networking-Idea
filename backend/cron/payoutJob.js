@@ -158,6 +158,8 @@ async function processPayout(professional) {
       currency: 'usd',
       destination: professional.stripeConnectedAccountId,
       description: `Payout for ${completedSessions.length} sessions and ${verifiedReferrals.length} referrals`
+    }, {
+      idempotencyKey: `payout-${professional._id.toString()}-${Date.now()}`
     });
     
     // Update session payment status

@@ -128,9 +128,16 @@ class PaymentService {
         };
       }
       
-      // If the payment is held, release it
-      // Note: In a real implementation with Stripe Connect, you might use transfers or payouts
-      // For simplicity, we're just updating status here
+      // Release payout via Stripe
+      const payoutAmount = Math.round(session.price * (1 - this.platformFeePercent / 100) * 100);
+      await stripe.transfers.create({
+        amount: payoutAmount,
+        currency: 'usd',
+        destination: session.professional.stripeConnectedAccountId,
+        description: `Payout for session ${session._id}`,
+        metadata: { sessionId: session._id.toString() }
+      }, { idempotencyKey: `session-${session._id.toString()}` });
+
       session.paymentStatus = 'released';
       await session.save();
       
@@ -198,6 +205,8 @@ class PaymentService {
           professionalId: professional._id.toString(),
           candidateId: referral.candidate._id.toString()
         }
+      }, {
+        idempotencyKey: `referral-${referral._id.toString()}`
       });
       
       // Update referral status
