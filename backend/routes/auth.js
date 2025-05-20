@@ -3,22 +3,34 @@ const router = express.Router();
 const AuthController = require('../controllers/authController');
 const { validators, validate } = require('../utils/validators');
 const authenticate = require('../middlewares/authenticate');
+const celebrate = require('../middlewares/schemaValidator');
+const Joi = celebrate.Joi;
 
 // Public routes
-router.post('/register', [
-  validators.email,
-  validators.password,
-  validators.firstName,
-  validators.lastName,
-  validators.userType,
-  validate
-], AuthController.register);
+router.post(
+  '/register',
+  celebrate({
+    body: Joi.object({
+      email: Joi.string().email().required(),
+      password: Joi.string().min(8).required(),
+      firstName: Joi.string().required(),
+      lastName: Joi.string().required(),
+      userType: Joi.string().valid('candidate','professional','admin')
+    })
+  }),
+  AuthController.register
+);
 
-router.post('/login', [
-  validators.email,
-  validators.password,
-  validate
-], AuthController.login);
+router.post(
+  '/login',
+  celebrate({
+    body: Joi.object({
+      email: Joi.string().email().required(),
+      password: Joi.string().required()
+    })
+  }),
+  AuthController.login
+);
 
 router.get('/verify-email', AuthController.verifyEmail);
 
