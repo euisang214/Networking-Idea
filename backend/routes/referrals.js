@@ -16,6 +16,9 @@ router.post(
   ReferralController.createReferral
 );
 
+// Get referrals for current user (professional or candidate)
+router.get('/me', ReferralController.getMyReferrals);
+
 // Get referral by ID
 router.get('/:referralId', [
   validators.referralId,

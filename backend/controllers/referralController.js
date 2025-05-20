@@ -94,13 +94,42 @@ const ReferralController = {
   getCandidateReferrals: async (req, res, next) => {
     try {
       const userId = req.user.id;
-      
+
       // Get referrals
       const referrals = await ReferralService.getCandidateReferrals(userId);
       
       return responseFormatter.success(res, {
         referrals
       }, 'Referrals retrieved successfully');
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Unified endpoint to fetch referrals for the current user
+  getMyReferrals: async (req, res, next) => {
+    try {
+      const userId = req.user.id;
+      const userType = req.user.userType;
+      let referrals;
+
+      if (userType === 'professional') {
+        const professionalProfile = await req.app
+          .get('db')
+          .professionalProfile.findOne({ user: userId });
+        if (!professionalProfile) {
+          throw new ValidationError('You do not have a professional profile');
+        }
+        referrals = await ReferralService.getProfessionalReferrals(
+          professionalProfile._id
+        );
+      } else if (userType === 'candidate') {
+        referrals = await ReferralService.getCandidateReferrals(userId);
+      } else {
+        throw new AuthorizationError('Not authorized to view referrals');
+      }
+
+      return responseFormatter.success(res, { referrals });
     } catch (error) {
       next(error);
     }

@@ -22,7 +22,7 @@ import VerifyEmail from './pages/auth/VerifyEmail';
 // Protected pages
 import SessionsPage from './pages/SessionsPage';
 import SessionDetailPage from './pages/SessionDetailPage';
-import ReferralsPage from './pages/ReferralsPage';
+import ReferralHistoryPage from './pages/ReferralHistory';
 import ProfilePage from './pages/ProfilePage';
 import SettingsPage from './pages/SettingsPage';
 import MessagesPage from './pages/MessagesPage';
@@ -73,7 +73,7 @@ const AppRoutes = () => {
         } />
         <Route path="referrals" element={
           <PrivateRoute>
-            <ReferralsPage />
+            <ReferralHistoryPage />
           </PrivateRoute>
         } />
         <Route path="profile" element={
