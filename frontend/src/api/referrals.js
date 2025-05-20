@@ -26,6 +26,12 @@ const ReferralsAPI = {
   getCandidateReferrals: async () => {
     const response = await api.get('/referrals/candidate/me');
     return response.data.data.referrals;
+  },
+
+  // Get referrals for current user
+  getMyReferrals: async () => {
+    const response = await api.get('/referrals/me');
+    return response.data.data.referrals;
   }
 };
 
