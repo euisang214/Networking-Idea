@@ -39,3 +39,7 @@ COOLDOWN_DAYS=7
 
 # React App
 REACT_APP_API_URL=http://localhost:5000/api
+
+# Compliance & Observability
+LOG_ARCHIVE_BUCKET=mentor-connect-logs
+LOKI_URL=http://localhost:3100/loki/api/v1/push

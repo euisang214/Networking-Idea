@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const UserController = require('../controllers/userController');
+const ComplianceController = require('../controllers/complianceController');
 const authenticate = require('../middlewares/authenticate');
 const { validators, validate } = require('../utils/validators');
 
@@ -19,6 +20,9 @@ router.put('/profile', [
 
 // Delete user account
 router.delete('/account', UserController.deleteAccount);
+
+// Permanently delete user data (GDPR)
+router.delete('/me/delete', ComplianceController.deleteMe);
 
 // Get user type
 router.get('/type', UserController.getUserType);

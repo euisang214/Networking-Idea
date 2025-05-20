@@ -9,6 +9,8 @@ MentorConnect is a web platform that connects prospective candidates with anonym
 - **Secure Payments**: Payments are processed only after verified sessions via Zoom
 - **Referral System**: Professionals can refer candidates to colleagues and earn rewards
 - **Email Integration**: Automatically tracks and verifies referral emails
+- **GDPR Compliance**: Users can delete their data via `/api/users/me/delete`
+- **Observability**: Exposes `/metrics` endpoint and streams logs to Loki
 
 ## Technologies
 
@@ -68,6 +70,12 @@ MentorConnect is a web platform that connects prospective candidates with anonym
       ```
 6. Run unit tests (optional):
    ```bash
-   npm test
-   ```
+  npm test
+  ```
+
+### Infrastructure
+
+Terraform files are provided in the `terraform/` directory for deploying the
+platform on AWS with RDS and ECS. These are reference modules and may require
+additional configuration before use.
 
