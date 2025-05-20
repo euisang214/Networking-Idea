@@ -8,6 +8,8 @@ const configureMiddleware = require('./config/middleware');
 const apiRoutes = require('./routes/api');
 const logger = require('./utils/logger');
 const cronJobs = require('./cron');
+const metrics = require('./utils/metrics');
+const { archiveLogs } = require('./utils/compliance');
 
 // Initialize Express app
 const app = express();
@@ -15,6 +17,7 @@ const server = http.createServer(app);
 
 // Configure middleware
 configureMiddleware(app);
+metrics.init(app);
 
 // Configure passport
 configurePassport();
@@ -89,9 +92,12 @@ cronJobs.initCronJobs();
 // Graceful shutdown
 const gracefulShutdown = async () => {
   logger.info('Shutting down gracefully...');
-  
+
   // Stop cron jobs
   cronJobs.stopCronJobs();
+
+  // Archive logs for compliance
+  await archiveLogs();
   
   // Close server
   if (server.listening) {
