@@ -46,11 +46,15 @@ const paymentSchema = new Schema({
   receiptUrl: String,
   session: {
     type: Schema.Types.ObjectId,
-    ref: 'Session'
+    ref: 'Session',
+    unique: true,
+    sparse: true
   },
   referral: {
     type: Schema.Types.ObjectId,
-    ref: 'Referral'
+    ref: 'Referral',
+    unique: true,
+    sparse: true
   },
   platformFee: {
     amount: Number,
@@ -70,8 +74,8 @@ const paymentSchema = new Schema({
 // Add index for faster lookups
 paymentSchema.index({ user: 1 });
 paymentSchema.index({ recipient: 1 });
-paymentSchema.index({ session: 1 });
-paymentSchema.index({ referral: 1 });
+paymentSchema.index({ session: 1 }, { unique: true, sparse: true });
+paymentSchema.index({ referral: 1 }, { unique: true, sparse: true });
 paymentSchema.index({ stripePaymentId: 1 });
 paymentSchema.index({ status: 1 });
 

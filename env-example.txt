@@ -20,6 +20,7 @@ REACT_APP_STRIPE_PUBLIC_KEY=pk_test_your_stripe_public_key
 
 # SendGrid
 SENDGRID_API_KEY=your_sendgrid_api_key
+SENDGRID_WEBHOOK_SECRET=your_sendgrid_webhook_secret
 EMAIL_FROM=noreply@mentorconnect.com
 PLATFORM_EMAIL=referrals@mentorconnect.com
 
@@ -33,6 +34,8 @@ ZOOM_WEBHOOK_SECRET=your_zoom_webhook_secret
 PLATFORM_FEE_PERCENT=15
 STRIPE_PLATFORM_FEE_PERCENT=10
 REFERRAL_REWARD_AMOUNT=50
+MAX_REWARD_PER_PRO=5
+COOLDOWN_DAYS=7
 
 # React App
 REACT_APP_API_URL=http://localhost:5000/api
