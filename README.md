@@ -45,7 +45,7 @@ MentorConnect is a web platform that connects prospective candidates with anonym
    ```bash
    cp env-example.txt .env
    ```
-3. Edit `.env` with your own credentials for MongoDB, Stripe, SendGrid, Zoom and other keys. These variables are used by both the backend and frontend services.
+3. Edit `.env` with your own credentials for MongoDB, Stripe, SendGrid, Zoom and other keys. These variables are used by both the backend and frontend services. Set `MOCK_INTEGRATIONS=true` if you want to run the app without contacting the real external services.
 4. **Option A: Docker Compose (recommended)**
    1. Ensure Docker is running.
    2. Start the stack:

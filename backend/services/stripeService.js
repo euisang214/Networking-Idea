@@ -3,6 +3,11 @@
  */
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const logger = require('../utils/logger');
+if (process.env.MOCK_INTEGRATIONS === "true") {
+  module.exports = require("./mocks/stripeService");
+  return;
+}
+
 
 /**
  * Create a checkout session for a mentoring session

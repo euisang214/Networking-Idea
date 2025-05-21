@@ -4,6 +4,11 @@ const fs = require('fs');
 const path = require('path');
 const handlebars = require('handlebars');
 const logger = require('../utils/logger');
+if (process.env.MOCK_INTEGRATIONS === "true") {
+  module.exports = require("./mocks/emailService");
+  return;
+}
+
 
 class EmailService {
   constructor() {
