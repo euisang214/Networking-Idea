@@ -2,6 +2,11 @@ const axios = require('axios');
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const logger = require('../utils/logger');
+if (process.env.MOCK_INTEGRATIONS === "true") {
+  module.exports = require("./mocks/zoomService");
+  return;
+}
+
 
 class ZoomService {
   constructor() {

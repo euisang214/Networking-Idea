@@ -2,7 +2,8 @@
 NODE_ENV=development
 PORT=5000
 FRONTEND_URL=http://localhost:3000
-
+# Set to true to disable real external integrations
+MOCK_INTEGRATIONS=false
 # MongoDB
 MONGO_USERNAME=admin
 MONGO_PASSWORD=password
