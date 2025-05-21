@@ -59,11 +59,12 @@ MentorConnect is a web platform that connects prospective candidates with anonym
       npm install
       ```
    2. Start MongoDB locally and set the connection string in `.env`.
-   3. Run the backend:
+   3. Install backend dependencies and start the API server:
       ```bash
-      node backend/index.js
+      cd backend
+      npm install
+      npm start
       ```
-      _Note: the `backend` directory does not include a `package.json` file. The Docker container has the required dependencies preinstalled. Running the backend outside Docker may require creating your own `package.json` and installing the dependencies manually._
    4. In a separate terminal start the frontend:
       ```bash
       npm start
