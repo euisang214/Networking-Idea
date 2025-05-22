@@ -69,13 +69,24 @@ class EmailService {
     }
   }
 
+  // Extract raw email address from possible name/address formats
+  extractAddress(value) {
+    if (!value) return null;
+    if (typeof value === 'object') {
+      return value.email || value.address || null;
+    }
+    const match = value.match(/<?([^<>\s]+@[^<>\s]+)>?/);
+    return match ? match[1].trim() : value.trim();
+  }
+
   // Extract domain from email address
   extractDomain(email) {
-    if (!email) return null;
-    
-    const parts = email.split('@');
+    const addr = this.extractAddress(email);
+    if (!addr) return null;
+
+    const parts = addr.split('@');
     if (parts.length !== 2) return null;
-    
+
     return parts[1].toLowerCase();
   }
 
@@ -94,11 +105,19 @@ class EmailService {
   // Parse an inbound email to extract information for referral verification
   parseReferralEmail(emailData) {
     try {
-      const senderEmail = emailData.from.email || emailData.from;
-      const recipientEmail = emailData.to.email || emailData.to;
-      const ccEmails = Array.isArray(emailData.cc) 
-        ? emailData.cc.map(cc => cc.email || cc) 
-        : typeof emailData.cc === 'string' ? [emailData.cc] : [];
+      const senderEmail = this.extractAddress(emailData.from?.email || emailData.from);
+      const recipientEmail = this.extractAddress(emailData.to?.email || emailData.to);
+      let ccEmails = [];
+      if (Array.isArray(emailData.cc)) {
+        ccEmails = emailData.cc
+          .map(cc => this.extractAddress(cc.email || cc))
+          .filter(Boolean);
+      } else if (typeof emailData.cc === 'string') {
+        ccEmails = emailData.cc
+          .split(',')
+          .map(e => this.extractAddress(e))
+          .filter(Boolean);
+      }
       
       // Verify platform email is CC'd
       const isPlatformCCd = ccEmails.some(email => 
