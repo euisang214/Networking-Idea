@@ -10,6 +10,8 @@ const logger = require('./utils/logger');
 const cronJobs = require('./cron');
 const metrics = require('./utils/metrics');
 const { archiveLogs } = require('./utils/compliance');
+const errorHandler = require('./middlewares/errorHandler');
+const { NotFoundError } = require('./utils/errorTypes');
 
 // Initialize Express app
 const app = express();
@@ -35,6 +37,14 @@ if (process.env.NODE_ENV === 'production') {
     res.sendFile(path.resolve(__dirname, '../frontend/build', 'index.html'));
   });
 }
+
+// Handle unmatched routes
+app.all('*', (req, res, next) => {
+  next(new NotFoundError(`Route ${req.originalUrl} not found`));
+});
+
+// Error handling middleware
+app.use(errorHandler);
 
 // Set up Socket.io
 const io = socketIo(server, {

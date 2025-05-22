@@ -5,7 +5,9 @@ const morgan = require('morgan');
 const passport = require('passport');
 const { apiLimiter } = require('../middlewares/rateLimiter');
 const { swaggerSpec, swaggerUi } = require('./swagger');
-const errorHandler = require('../middlewares/errorHandler');
+// The errorHandler middleware should be registered after routes
+// so it is imported in app.js instead of here.
+// const errorHandler = require('../middlewares/errorHandler');
 const logger = require('../utils/logger');
 
 /**
@@ -48,11 +50,10 @@ const configureMiddleware = (app) => {
   
   // Swagger API docs
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-  
 
-  
-  // Error handling middleware
-  app.use(errorHandler);
-};
+  // Error handling middleware is registered in app.js
+  // after all routes so that errors from routes are
+  // properly handled.
+}; 
 
 module.exports = configureMiddleware;
