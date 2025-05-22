@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const EmailService = require('../services/emailService');
 const ReferralService = require('../services/referralService');
+const Referral = require('../models/referral');
+const ReferralEvent = require('../models/referralEvent');
 const logger = require('../utils/logger');
 const responseFormatter = require('../utils/responseFormatter');
 const { ExternalServiceError } = require('../utils/errorTypes');
@@ -119,33 +121,24 @@ router.post('/events', async (req, res) => {
     }
 
     if (Array.isArray(events)) {
-      // Process events
-      events.forEach(event => {
+      for (const event of events) {
         const eventType = event.event;
         const emailId = event.sg_message_id;
 
         logger.debug(`SendGrid event ${eventType} for message ${emailId}`);
 
-        // Handle different event types
-        switch (eventType) {
-          case 'delivered':
-            break;
-          case 'open':
-            break;
-          case 'click':
-            break;
-          case 'bounce':
-            break;
-          case 'dropped':
-            break;
-          case 'spamreport':
-            break;
-          case 'unsubscribe':
-            break;
-          default:
-            break;
+        let referralId = null;
+        const referral = await Referral.findOne({ 'emailDetails.referralEmailId': emailId });
+        if (referral) {
+          referralId = referral._id;
         }
-      });
+
+        await ReferralEvent.create({
+          referral: referralId,
+          type: eventType,
+          data: event
+        });
+      }
     }
 
     // Always return 200 to SendGrid

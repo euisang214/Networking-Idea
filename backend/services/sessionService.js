@@ -1,4 +1,5 @@
 const Session = require('../models/session');
+const SessionVerification = require('../models/sessionVerification');
 const User = require('../models/user');
 const ProfessionalProfile = require('../models/professionalProfile');
 const NotificationService = require('./notificationService');
@@ -252,6 +253,14 @@ class SessionService {
         meetingDetails.duration,
         meetingDetails.participantCount
       );
+
+      await SessionVerification.create({
+        session: session._id,
+        verified: true,
+        method: meetingDetails.method || 'manual',
+        meetingDuration: meetingDetails.duration,
+        participantCount: meetingDetails.participantCount
+      });
       
       logger.info(`Session ${sessionId} marked as verified`);
       
