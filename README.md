@@ -8,7 +8,7 @@ MentorConnect is a web platform that connects prospective candidates with anonym
 - **Anonymized Professionals**: Professionals can maintain anonymity while sharing insights
 - **Secure Payments**: Payments are held on Stripe and released to professionals only after the session has been verified
 - **Referral System**: Professionals can refer candidates to colleagues and earn rewards
-- **Email Integration**: Automatically tracks and verifies referral emails
+- **Email Integration**: Automatically tracks and verifies referral emails, and sends session confirmations using SendGrid
 - **GDPR Compliance**: Users can delete their data via `/api/users/me/delete`
 - **Observability**: Exposes `/metrics` endpoint and streams logs to Loki
 - **Rate Limiting**: Built-in middleware protects API endpoints from abuse

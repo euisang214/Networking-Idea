@@ -4,6 +4,7 @@ const User = require('../models/user');
 const ProfessionalProfile = require('../models/professionalProfile');
 const NotificationService = require('./notificationService');
 const ZoomService = require('./zoomService');
+const EmailService = require('./emailService');
 const logger = require('../utils/logger');
 
 class SessionService {
@@ -69,6 +70,9 @@ class SessionService {
         userName: `${user.firstName} ${user.lastName}`,
         startTime
       });
+
+      // Send confirmation emails
+      await EmailService.sendSessionConfirmation(session, professional, user);
       
       logger.info(`Session created: ${session._id} between professional ${professionalId} and user ${userId}`);
       
