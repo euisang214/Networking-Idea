@@ -80,3 +80,17 @@ Terraform files are provided in the `terraform/` directory for deploying the
 platform on AWS with RDS and ECS. These are reference modules and may require
 additional configuration before use.
 
+## Error Handling & Logging
+
+The backend uses a centralized error handling system based on custom error
+classes found in `backend/utils/errorTypes.js`. All API routes forward errors to
+`backend/middlewares/errorHandler.js`, ensuring consistent JSON responses and
+proper HTTP status codes. The `logger` utility (`backend/utils/logger.js`) writes
+structured logs to files in `backend/logs/` and, when the `LOKI_URL`
+environment variable is set, also streams logs to Loki. Incoming requests are
+captured by `logger.requestLogger`, and unexpected exceptions are recorded by
+`logger.errorLogger`.
+
+To view local logs, check the `backend/logs` directory. In production, configure
+`LOKI_URL` to ship logs to your Loki instance for centralized observability.
+
