@@ -19,6 +19,17 @@ MentorConnect is a web platform that connects prospective candidates with anonym
 - **Database**: MongoDB
 - **Integrations**: Zoom API, Stripe, SendGrid
 
+## Authentication & Authorization
+
+The API secures endpoints with JSON Web Tokens (JWT). Clients obtain a token by
+calling `/auth/login` and must send it in the `Authorization: Bearer <token>`
+header on subsequent requests. Tokens are signed using the `JWT_SECRET`
+environment variable and expire based on `JWT_EXPIRES_IN`.
+
+Role‑based access control is implemented via the `rolesAllowed` middleware. The
+token payload includes the user’s `userType`, allowing routes to restrict
+access to specific roles (e.g. `candidate`, `professional`, `admin`).
+
 ## Key Business Rules
 
 1. Professional is only paid once a coffee chat has occurred (verified via Zoom listener APIs)
