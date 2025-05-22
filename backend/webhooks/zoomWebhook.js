@@ -3,6 +3,7 @@ const router = express.Router();
 const ZoomService = require('../services/zoomService');
 const SessionService = require('../services/sessionService');
 const PaymentService = require('../services/paymentService');
+const SessionVerification = require('../models/sessionVerification');
 const logger = require('../utils/logger');
 const responseFormatter = require('../utils/responseFormatter');
 const { ExternalServiceError } = require('../utils/errorTypes');
@@ -34,7 +35,10 @@ const handleMeetingEnded = async (payload) => {
     }
     
     // Mark session as verified
-    await SessionService.markAsVerified(session._id, meetingVerification);
+    await SessionService.markAsVerified(session._id, {
+      ...meetingVerification,
+      method: 'zoom-webhook'
+    });
     
     // Release payment to professional
     const paymentResult = await PaymentService.releaseSessionPayment(session._id);
