@@ -44,15 +44,13 @@ class PaymentService {
         await user.save();
       }
       
-      // Calculate platform fee amount
-      const platformFeeAmount = Math.round(session.price * (this.platformFeePercent / 100));
-      
-      // Create payment intent
+      // Create payment intent with manual capture so funds are held until the session is verified
       const paymentIntent = await stripe.paymentIntents.create({
         amount: session.price * 100, // Convert to cents
         currency: 'usd',
         customer: user.stripeCustomerId,
         payment_method: paymentMethodId,
+        capture_method: 'manual',
         off_session: false,
         confirm: true,
         description: `Session with ${session.professional.anonymizedProfile.displayName}`,
@@ -60,16 +58,12 @@ class PaymentService {
           sessionId: session._id.toString(),
           userId: userId,
           professionalId: session.professional._id.toString()
-        },
-        application_fee_amount: platformFeeAmount * 100, // Convert to cents
-        transfer_data: {
-          destination: session.professional.stripeConnectedAccountId,
         }
       });
       
       // Update session with payment information
       session.paymentId = paymentIntent.id;
-      session.paymentStatus = paymentIntent.status === 'succeeded' ? 'paid' : 'pending';
+      session.paymentStatus = 'authorized';
       await session.save();
       
       // Send notifications
@@ -128,6 +122,9 @@ class PaymentService {
         };
       }
       
+      // Capture the held payment
+      await stripe.paymentIntents.capture(session.paymentId);
+
       // Release payout via Stripe
       const payoutAmount = Math.round(session.price * (1 - this.platformFeePercent / 100) * 100);
       await stripe.transfers.create({

@@ -46,8 +46,10 @@ const handlePaymentIntentSucceeded = async (paymentIntent) => {
       return null;
     }
     
-    session.paymentStatus = 'paid';
-    await session.save();
+    if (session.paymentStatus !== 'released') {
+      session.paymentStatus = 'paid';
+      await session.save();
+    }
     
     // Create payment record
     const payment = new Payment({
