@@ -11,6 +11,7 @@ MentorConnect is a web platform that connects prospective candidates with anonym
 - **Email Integration**: Automatically tracks and verifies referral emails
 - **GDPR Compliance**: Users can delete their data via `/api/users/me/delete`
 - **Observability**: Exposes `/metrics` endpoint and streams logs to Loki
+- **Rate Limiting**: Built-in middleware protects API endpoints from abuse
 
 ## Technologies
 

@@ -21,14 +21,29 @@ const createRateLimiter = (max = 100, windowMin = 15, message = 'Too many reques
 
 // Different rate limiters for different routes
 
+const parseEnvInt = (value, fallback) => {
+  const parsed = parseInt(value, 10);
+  return Number.isNaN(parsed) ? fallback : parsed;
+};
+
 // General API rate limiter
-const apiLimiter = createRateLimiter(100, 15);
+const apiLimiter = createRateLimiter(
+  parseEnvInt(process.env.API_RATE_LIMIT_MAX, 100),
+  parseEnvInt(process.env.API_RATE_LIMIT_WINDOW_MIN, 15)
+);
 
 // Auth endpoints rate limiter (more strict)
-const authLimiter = createRateLimiter(20, 15, 'Too many login attempts, please try again later');
+const authLimiter = createRateLimiter(
+  parseEnvInt(process.env.AUTH_RATE_LIMIT_MAX, 20),
+  parseEnvInt(process.env.AUTH_RATE_LIMIT_WINDOW_MIN, 15),
+  'Too many login attempts, please try again later'
+);
 
 // Webhook rate limiter (more permissive)
-const webhookLimiter = createRateLimiter(300, 15);
+const webhookLimiter = createRateLimiter(
+  parseEnvInt(process.env.WEBHOOK_RATE_LIMIT_MAX, 300),
+  parseEnvInt(process.env.WEBHOOK_RATE_LIMIT_WINDOW_MIN, 15)
+);
 
 module.exports = {
   apiLimiter,
