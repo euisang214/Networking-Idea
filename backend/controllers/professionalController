@@ -32,32 +32,9 @@ const ProfessionalController = {
   getProfile: async (req, res, next) => {
     try {
       const { profileId } = req.params;
-      const userId = req.user.id;
       
       // Get profile
       const profile = await ProfessionalService.getProfileById(profileId);
-      
-      // Check if user is the profile owner to show private data
-      const showPrivate = profile.user._id.toString() === userId;
-      
-      // If not the owner, return anonymized profile only
-      if (!showPrivate) {
-        return responseFormatter.success(res, {
-          profile: {
-            _id: profile._id,
-            industry: profile.industry,
-            yearsOfExperience: profile.yearsOfExperience,
-            skills: profile.skills,
-            hourlyRate: profile.hourlyRate,
-            anonymizedProfile: profile.anonymizedProfile,
-            statistics: {
-              totalSessions: profile.statistics.totalSessions,
-              completedSessions: profile.statistics.completedSessions,
-              averageRating: profile.statistics.averageRating
-            }
-          }
-        });
-      }
       
       return responseFormatter.success(res, {
         profile
