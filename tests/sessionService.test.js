@@ -14,9 +14,9 @@ vi.mock('../backend/models/session', () => Session);
 
 const professional = {
   _id: 'pro1',
-  anonymizedProfile: { displayName: 'Anon Pro', anonymizedTitle: 'Engineer' },
   hourlyRate: 100,
   user: { _id: 'proUser1', firstName: 'Pro', lastName: 'Fessional', email: 'pro@example.com' },
+  title: 'Engineer',
   availability: [{ day: 'monday', startTime: '09:00', endTime: '17:00' }]
 };
 vi.mock('../backend/models/professionalProfile', () => ({
@@ -25,6 +25,10 @@ vi.mock('../backend/models/professionalProfile', () => ({
 
 vi.mock('../backend/models/user', () => ({
   findById: vi.fn(() => Promise.resolve({ _id: 'user1', firstName: 'First', lastName: 'Last', email: 'user@example.com' }))
+}));
+
+vi.mock('../backend/models/sessionVerification', () => ({
+  create: vi.fn()
 }));
 
 vi.mock('../backend/services/zoomService', () => ({

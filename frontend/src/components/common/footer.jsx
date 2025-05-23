@@ -14,7 +14,7 @@ const Footer = () => {
               MentorConnect
             </Link>
             <p className="mt-2 text-sm text-gray-300">
-              Connect with anonymized industry professionals for paid virtual networking sessions and referral-based rewards.
+              Connect with industry professionals for paid virtual networking sessions and referral-based rewards.
             </p>
             <div className="mt-4 flex space-x-6">
               {/* Social icons */}

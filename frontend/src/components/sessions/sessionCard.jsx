@@ -110,8 +110,8 @@ const SessionCard = ({ session, userType, onStatusUpdate }) => {
             </div>
             
             <h3 className="mt-2 text-lg font-medium text-gray-900">
-              Session with {userType === 'user' 
-                ? session.professional?.anonymizedProfile?.displayName 
+              Session with {userType === 'user'
+                ? `${session.professional?.user?.firstName} ${session.professional?.user?.lastName}`
                 : `${session.user?.firstName} ${session.user?.lastName}`}
             </h3>
             

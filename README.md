@@ -1,11 +1,11 @@
 # MentorConnect
 
-MentorConnect is a web platform that connects prospective candidates with anonymized industry professionals for paid virtual networking sessions and referral-based rewards.
+MentorConnect is a web platform that connects prospective candidates with industry professionals for paid virtual networking sessions and referral-based rewards.
 
 ## Features
 
 - **Virtual Networking Sessions**: Connect with industry professionals through Zoom meetings
-- **Anonymized Professionals**: Professionals can maintain anonymity while sharing insights
+- **Industry Professionals**: Connect directly with experienced professionals without anonymity
 - **Secure Payments**: Payments are held on Stripe and released to professionals only after the session has been verified
 - **Referral System**: Professionals can refer candidates to colleagues and earn rewards
 - **Email Integration**: Automatically tracks and verifies referral emails, and sends session confirmations using SendGrid

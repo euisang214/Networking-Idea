@@ -40,7 +40,7 @@ class ZoomService {
           'Content-Type': 'application/json'
         },
         data: {
-          topic: `Networking Session: ${professional.anonymizedProfile.displayName}`,
+          topic: `Networking Session: ${professional.user.firstName} ${professional.user.lastName}`,
           type: 2, // Scheduled meeting
           start_time: new Date(session.startTime).toISOString(),
           duration: Math.round((session.endTime - session.startTime) / (1000 * 60)), // Convert to minutes

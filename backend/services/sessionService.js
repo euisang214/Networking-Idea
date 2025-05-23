@@ -61,7 +61,7 @@ class SessionService {
       // Send notifications
       await NotificationService.sendNotification(userId, 'sessionCreated', {
         sessionId: session._id,
-        professionalName: professional.anonymizedProfile.displayName,
+        professionalName: `${professional.user.firstName} ${professional.user.lastName}`,
         startTime
       });
       

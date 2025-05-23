@@ -2,7 +2,6 @@ const ProfessionalProfile = require('../models/professionalProfile');
 const User = require('../models/user');
 const Company = require('../models/company');
 const Industry = require('../models/industry');
-const anonymizer = require('../utils/anonymizer');
 const logger = require('../utils/logger');
 
 class ProfessionalService {
@@ -63,8 +62,7 @@ class ProfessionalService {
         languages: profileData.languages || []
       });
       
-      // Generate anonymized profile
-      await anonymizer.anonymizeProfile(profile);
+
       
       await profile.save();
       
@@ -182,13 +180,7 @@ class ProfessionalService {
         profile.industry = updateData.industry;
       }
       
-      // Re-anonymize profile if sensitive fields changed
-      const sensitiveFields = ['title', 'companyName', 'bio'];
-      const needsReanonymization = sensitiveFields.some(field => updateData[field] !== undefined);
-      
-      if (needsReanonymization) {
-        await anonymizer.anonymizeProfile(profile);
-      }
+
       
       await profile.save();
       
@@ -229,6 +221,8 @@ class ProfessionalService {
       // Execute query
       const professionals = await ProfessionalProfile.find(query)
                                                   .populate('industry')
+                                                  .populate('company')
+                                                  .populate('user', 'firstName lastName')
                                                   .sort({ yearsOfExperience: -1 })
                                                   .skip(offset)
                                                   .limit(limit)
@@ -258,27 +252,17 @@ class ProfessionalService {
     }
   }
 
-  // Anonymize or re-anonymize a professional profile
+  // Deprecated anonymization method retained for backward compatibility
   async anonymizeProfile(profileId) {
-    try {
-      const profile = await ProfessionalProfile.findById(profileId)
-                                             .populate('company')
-                                             .populate('industry');
-      
-      if (!profile) {
-        throw new Error('Professional profile not found');
-      }
-      
-      await anonymizer.anonymizeProfile(profile);
-      await profile.save();
-      
-      logger.info(`Professional profile ${profileId} anonymized`);
-      
-      return profile;
-    } catch (error) {
-      logger.error(`Failed to anonymize profile: ${error.message}`);
-      throw new Error(`Failed to anonymize profile: ${error.message}`);
+    const profile = await ProfessionalProfile.findById(profileId)
+                                           .populate('company')
+                                           .populate('industry');
+
+    if (!profile) {
+      throw new Error('Professional profile not found');
     }
+
+    return profile;
   }
 }
 

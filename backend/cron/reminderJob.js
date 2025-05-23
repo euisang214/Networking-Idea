@@ -81,7 +81,7 @@ async function sendReminder(session, reminderType) {
         'session-reminder',
         {
           userName: `${session.user.firstName} ${session.user.lastName}`,
-          professionalName: session.professional.anonymizedProfile.displayName,
+          professionalName: `${session.professional.user.firstName} ${session.professional.user.lastName}`,
           sessionDate: formattedStartTime,
           sessionDuration: (session.endTime - session.startTime) / (1000 * 60), // minutes
           zoomLink: session.zoomMeetingUrl,
