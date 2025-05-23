@@ -3,6 +3,7 @@ const ProfessionalService = require('../services/professionalService');
 const responseFormatter = require('../utils/responseFormatter');
 const { ValidationError, AuthorizationError } = require('../utils/errorTypes');
 const logger = require('../utils/logger');
+const GoogleService = require('../services/googleService');
 
 // Controller for user-related operations
 const UserController = {
@@ -163,6 +164,29 @@ const UserController = {
       return responseFormatter.success(res, {
         userType: user.userType
       }, 'User type updated successfully');
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Get Google Calendar availability for current user
+  getCalendarAvailability: async (req, res, next) => {
+    try {
+      const user = await User.findById(req.user.id);
+      if (!user) {
+        throw new ValidationError('User not found');
+      }
+      if (!user.googleAccessToken) {
+        throw new ValidationError('Google account not connected');
+      }
+      const now = new Date();
+      const week = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const busy = await GoogleService.getAvailability(
+        user.googleAccessToken,
+        now.toISOString(),
+        week.toISOString()
+      );
+      return responseFormatter.success(res, { busy });
     } catch (error) {
       next(error);
     }

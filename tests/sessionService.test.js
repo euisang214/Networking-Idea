@@ -31,6 +31,8 @@ vi.mock('../backend/services/zoomService', () => ({
   createMeeting: vi.fn(() => Promise.resolve({ meetingId: 'm1', meetingUrl: 'http://zoom', password: 'pwd', startUrl: 'http://start' }))
 }));
 
+vi.mock('../backend/models/sessionVerification', () => function(){});
+
 const notificationService = { sendNotification: vi.fn() };
 vi.mock('../backend/services/notificationService', () => notificationService);
 

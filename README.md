@@ -9,6 +9,7 @@ MentorConnect is a web platform that connects prospective candidates with anonym
 - **Secure Payments**: Payments are held on Stripe and released to professionals only after the session has been verified
 - **Referral System**: Professionals can refer candidates to colleagues and earn rewards
 - **Email Integration**: Automatically tracks and verifies referral emails, and sends session confirmations using SendGrid
+- **Google Sign-In**: Users can sign up with Google and share calendar availability
 - **GDPR Compliance**: Users can delete their data via `/api/users/me/delete`
 - **Observability**: Exposes `/metrics` endpoint and streams logs to Loki
 - **Rate Limiting**: Built-in middleware protects API endpoints from abuse
@@ -18,7 +19,7 @@ MentorConnect is a web platform that connects prospective candidates with anonym
 - **Frontend**: React, Tailwind CSS, Stripe.js
 - **Backend**: Node.js, Express
 - **Database**: MongoDB
-- **Integrations**: Zoom API, Stripe, SendGrid
+- **Integrations**: Zoom API, Stripe, SendGrid, Google Calendar
 
 ## Authentication & Authorization
 
@@ -57,7 +58,7 @@ access to specific roles (e.g. `candidate`, `professional`, `admin`).
    ```bash
    cp env-example.txt .env
    ```
-3. Edit `.env` with your own credentials for MongoDB, Stripe, SendGrid, Zoom and other keys. These variables are used by both the backend and frontend services. Set `MOCK_INTEGRATIONS=true` if you want to run the app without contacting the real external services.
+3. Edit `.env` with your own credentials for MongoDB, Stripe, SendGrid, Zoom, Google OAuth and other keys. These variables are used by both the backend and frontend services. Set `MOCK_INTEGRATIONS=true` if you want to run the app without contacting the real external services.
 4. **Option A: Docker Compose (recommended)**
    1. Ensure Docker is running.
    2. Start the stack:
