@@ -15,6 +15,7 @@ router.get('/profile', UserController.getProfile);
 router.put('/profile', [
   validators.firstName,
   validators.lastName,
+  validators.resume,
   validate
 ], UserController.updateProfile);
 
