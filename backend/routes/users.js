@@ -30,4 +30,7 @@ router.get('/type', UserController.getUserType);
 // Set user type
 router.put('/type', UserController.setUserType);
 
+// Get Google Calendar availability for current user
+router.get('/calendar-availability', UserController.getCalendarAvailability);
+
 module.exports = router;

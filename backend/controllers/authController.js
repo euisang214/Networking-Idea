@@ -51,6 +51,26 @@ const AuthController = {
       next(error);
     }
   },
+
+  // Google authentication
+  googleAuth: async (req, res, next) => {
+    try {
+      const { idToken, accessToken, refreshToken } = req.body;
+
+      if (!idToken || !accessToken) {
+        throw new ValidationError('Google tokens are required');
+      }
+
+      const result = await AuthService.googleLogin(idToken, accessToken, refreshToken);
+
+      return responseFormatter.success(res, {
+        token: result.token,
+        user: result.user
+      }, 'Login successful');
+    } catch (error) {
+      next(error);
+    }
+  },
   
   // Verify email
   verifyEmail: async (req, res, next) => {

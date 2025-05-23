@@ -1,6 +1,10 @@
 const { describe, it, expect, beforeAll, vi } = require('./test-helpers');
 
 vi.mock('../backend/services/emailService', () => ({ sendEmail: vi.fn() }));
+vi.mock('../backend/services/googleService', () => ({
+  verifyIdToken: vi.fn(),
+  getAvailability: vi.fn()
+}));
 vi.mock('../backend/models/user', () => ({}));
 vi.mock('bcryptjs', () => ({ genSalt: vi.fn(), hash: vi.fn(), compare: vi.fn() }));
 vi.mock('../backend/utils/logger', () => ({ debug: vi.fn(), error: vi.fn() }));
