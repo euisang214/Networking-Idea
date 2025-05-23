@@ -17,7 +17,8 @@ router.post(
       password: Joi.string().min(8).required(),
       firstName: Joi.string().required(),
       lastName: Joi.string().required(),
-      userType: Joi.string().valid('candidate','professional','admin')
+      userType: Joi.string().valid('candidate','professional','admin'),
+      resume: Joi.string()
     })
   }),
   AuthController.register

@@ -7,10 +7,13 @@ export const useForm = (initialState, submitCallback, validateForm) => {
   
   // Handle form input changes
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    
+    const { name, value, type, checked, files } = e.target;
+
     // Handle different input types
-    const inputValue = type === 'checkbox' ? checked : value;
+    let inputValue;
+    if (type === 'checkbox') inputValue = checked;
+    else if (type === 'file') inputValue = files[0];
+    else inputValue = value;
     
     setValues({
       ...values,

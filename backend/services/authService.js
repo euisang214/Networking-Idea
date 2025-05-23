@@ -10,7 +10,7 @@ class AuthService {
   // Register a new user
   async register(userData) {
     try {
-      const { email, password, firstName, lastName, userType } = userData;
+      const { email, password, firstName, lastName, userType, resume } = userData;
       
       // Check if email already exists
       const existingUser = await User.findOne({ email: email.toLowerCase() });
@@ -24,6 +24,7 @@ class AuthService {
         password,
         firstName,
         lastName,
+        resume,
         userType: userType || 'candidate',
         emailVerificationToken: crypto.randomBytes(32).toString('hex')
       });
@@ -49,7 +50,8 @@ class AuthService {
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
-          userType: user.userType
+          userType: user.userType,
+          resume: user.resume
         }
       };
     } catch (error) {

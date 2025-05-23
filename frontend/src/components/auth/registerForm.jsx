@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from '../../hooks/useForm';
 import AuthAPI from '../../api/auth';
 import Input from '../../common/Input';
+import FileInput from '../../common/FileInput';
 import Button from '../../common/Button';
 
 const RegisterForm = () => {
@@ -19,7 +20,8 @@ const RegisterForm = () => {
       email: '',
       password: '',
       confirmPassword: '',
-      userType: 'candidate' // Default user type
+      userType: 'candidate', // Default user type
+      resume: null
     },
     handleRegister,
     validateRegister
@@ -54,6 +56,10 @@ const RegisterForm = () => {
     } else if (values.password !== values.confirmPassword) {
       errors.confirmPassword = 'Passwords do not match';
     }
+
+    if (values.resume && values.resume.type && !values.resume.type.includes('pdf')) {
+      errors.resume = 'Resume must be a PDF file';
+    }
     
     return errors;
   }
@@ -62,14 +68,25 @@ const RegisterForm = () => {
   async function handleRegister() {
     setError('');
     setIsLoading(true);
-    
+
     try {
+      let resumeData = null;
+      if (values.resume instanceof File) {
+        resumeData = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(values.resume);
+        });
+      }
+
       await AuthAPI.register({
         firstName: values.firstName,
         lastName: values.lastName,
         email: values.email,
         password: values.password,
-        userType: values.userType
+        userType: values.userType,
+        resume: resumeData
       });
       
       setRegisterSuccess(true);
@@ -159,6 +176,14 @@ const RegisterForm = () => {
           onChange={handleChange}
           error={errors.confirmPassword}
           required
+        />
+
+        <FileInput
+          label="Upload Resume (PDF)"
+          name="resume"
+          accept="application/pdf"
+          onChange={handleChange}
+          error={errors.resume}
         />
         
         <div className="mt-4">

@@ -36,6 +36,11 @@ const validators = {
     .optional()
     .isIn(['candidate', 'professional', 'admin'])
     .withMessage('User type must be candidate, professional, or admin'),
+
+  resume: body('resume')
+    .optional()
+    .isString()
+    .withMessage('Resume must be a string'),
     
   // Session validators
   sessionId: param('sessionId').isMongoId().withMessage('Invalid session ID'),

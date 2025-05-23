@@ -31,6 +31,10 @@ const userSchema = new Schema({
   profileImage: {
     type: String
   },
+  // Optional resume file stored as a Base64 data URL or external link
+  resume: {
+    type: String
+  },
   phoneNumber: {
     type: String
   },
