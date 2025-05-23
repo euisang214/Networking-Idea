@@ -41,7 +41,7 @@ const UserController = {
   updateProfile: async (req, res, next) => {
     try {
       const userId = req.user.id;
-      const { firstName, lastName, phoneNumber, profileImage, settings } = req.body;
+      const { firstName, lastName, phoneNumber, profileImage, resume, settings } = req.body;
       
       // Get user
       const user = await User.findById(userId);
@@ -55,6 +55,7 @@ const UserController = {
       if (lastName) user.lastName = lastName;
       if (phoneNumber) user.phoneNumber = phoneNumber;
       if (profileImage) user.profileImage = profileImage;
+      if (resume) user.resume = resume;
       
       // Update settings
       if (settings) {
@@ -80,6 +81,7 @@ const UserController = {
           userType: user.userType,
           profileImage: user.profileImage,
           phoneNumber: user.phoneNumber,
+          resume: user.resume,
           settings: user.settings
         }
       }, 'Profile updated successfully');
