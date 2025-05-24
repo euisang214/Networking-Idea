@@ -32,7 +32,7 @@ exports.createCheckoutSession = async ({
 }) => {
   try {
     // Calculate platform fee (e.g., 10% of the amount)
-    const platformFeePercent = parseFloat(process.env.STRIPE_PLATFORM_FEE_PERCENT || '10');
+    const platformFeePercent = parseFloat(process.env.PLATFORM_FEE_PERCENT || '10');
     const platformFeeAmount = Math.round(amount * (platformFeePercent / 100));
     
     // Create Stripe checkout session
@@ -170,7 +170,7 @@ exports.createDirectCharge = async ({
 }) => {
   try {
     // Calculate platform fee (e.g., 10% of the amount)
-    const platformFeePercent = parseFloat(process.env.STRIPE_PLATFORM_FEE_PERCENT || '10');
+    const platformFeePercent = parseFloat(process.env.PLATFORM_FEE_PERCENT || '10');
     const platformFeeAmount = Math.round(amount * (platformFeePercent / 100));
     
     // Create a payment intent
