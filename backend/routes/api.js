@@ -11,6 +11,7 @@ const notificationRoutes = require('./notifications');
 const referralRoutes = require('./referrals');
 const paymentRoutes = require('./payments');
 const webhookRoutes = require('./webhooks');
+const adminRoutes = require('./admin');
 
 // Register API routes
 router.use('/auth', authRoutes);
@@ -22,6 +23,7 @@ router.use('/notifications', notificationRoutes);
 router.use('/referrals', referralRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/webhooks', webhookRoutes);
+router.use('/admin', adminRoutes);
 
 // API status endpoint
 router.get('/status', (req, res) => {

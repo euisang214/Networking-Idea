@@ -1,6 +1,8 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
+import AdminLayout from './components/admin/AdminLayout';
+import AdminDashboard from './pages/admin/AdminDashboard';
 
 // Layouts
 import MainLayout from './layouts/MainLayout';
@@ -105,6 +107,15 @@ const AppRoutes = () => {
         <Route path="forgot-password" element={<ForgotPassword />} />
         <Route path="reset-password" element={<ResetPassword />} />
         <Route path="verify-email" element={<VerifyEmail />} />
+      </Route>
+
+      {/* Admin routes */}
+      <Route path="admin" element={<AdminLayout />}>
+        <Route index element={<AdminDashboard />} />
+        <Route path="sessions" element={<SessionManagement />} />
+        <Route path="referrals" element={<ReferralManagement />} />
+        <Route path="users" element={<UserManagement />} />
+        <Route path="analytics" element={<Analytics />} />
       </Route>
       
       {/* Dashboard routes */}
