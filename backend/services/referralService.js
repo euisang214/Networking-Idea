@@ -1,315 +1,168 @@
-const Referral = require('../models/referral');
-const User = require('../models/user');
-const ProfessionalProfile = require('../models/professionalProfile');
-const NotificationService = require('./notificationService');
-const EmailService = require('./emailService');
+const ReferralService = require('./referralService');
 const PaymentService = require('./paymentService');
+const NotificationService = require('./notificationService');
 const logger = require('../utils/logger');
 
-const MAX_REWARD_PER_PRO = parseInt(process.env.MAX_REWARD_PER_PRO || '0', 10);
-const COOLDOWN_DAYS = parseInt(process.env.COOLDOWN_DAYS || '0', 10);
-
-class ReferralService {
-  // Create a new referral record from parsed email
-  async createReferralFromEmail(emailDetails) {
+class referralService extends ReferralService {
+  
+  // Enhanced email processing with automatic payout
+  async processReferralEmail(emailData) {
     try {
-      // Validate email contains required information
-      if (!emailDetails || !emailDetails.senderEmail || !emailDetails.recipientEmail) {
-        throw new Error('Invalid email details');
+      logger.info('Processing referral email for automatic verification');
+      
+      // Parse email data using existing method
+      const parsedEmail = EmailService.parseReferralEmail(emailData);
+      
+      if (!parsedEmail || !parsedEmail.isPlatformCCd) {
+        logger.info('Email not eligible for referral processing');
+        return { success: false, reason: 'Platform not CC\'d or invalid email' };
       }
       
-      // Check if platform was CC'd
-      if (!emailDetails.isPlatformCCd) {
-        logger.info(`Platform not CC'd in email from ${emailDetails.senderEmail}`);
-        return null;
+      // Create referral record
+      const referral = await this.createReferralFromEmail(parsedEmail);
+      
+      if (!referral) {
+        return { success: false, reason: 'Could not create referral' };
       }
       
-      // Find professional based on sender email
-      const professionalUser = await User.findOne({ 
-        email: emailDetails.senderEmail.toLowerCase(),
-        userType: 'professional'
-      });
-      
-      if (!professionalUser) {
-        logger.info(`No professional found with email ${emailDetails.senderEmail}`);
-        return null;
+      // CRITICAL: Auto-verify if domains match
+      if (parsedEmail.domainsMatch) {
+        await this.verifyAndPayReferral(referral._id);
+        return {
+          success: true,
+          referralId: referral._id,
+          verified: true,
+          payoutProcessed: true
+        };
       }
       
-      const professional = await ProfessionalProfile.findOne({
-        user: professionalUser._id
-      });
-      
-      if (!professional) {
-        logger.info(`No professional profile found for user ${professionalUser._id}`);
-        return null;
-      }
-      
-      // Try to find candidate in email content
-      const candidate = await User.findCandidateInEmailContent(emailDetails.body);
-      
-      if (!candidate) {
-        logger.info(`No candidate found in email content from ${emailDetails.senderEmail}`);
-        return null;
-      }
-      
-      // Check if referral already exists
-      const existingReferral = await Referral.findOne({
-        professional: professional._id,
-        candidate: candidate._id,
-        'emailDetails.referralEmailId': emailDetails.referralEmailId
-      });
-      
-      if (existingReferral) {
-        logger.info(`Referral already exists: ${existingReferral._id}`);
-        return existingReferral;
-      }
-      
-      // Create new referral
-      const referral = new Referral({
-        professional: professional._id,
-        candidate: candidate._id,
-        referralType: 'email',
-        status: 'pending',
-        emailDetails: {
-          senderEmail: emailDetails.senderEmail,
-          senderDomain: emailDetails.senderDomain,
-          recipientEmail: emailDetails.recipientEmail,
-          recipientDomain: emailDetails.recipientDomain,
-          ccEmails: emailDetails.ccEmails,
-          subject: emailDetails.subject,
-          referralEmailId: emailDetails.referralEmailId,
-          timestamp: emailDetails.timestamp
-        },
-        emailDomainVerified: emailDetails.domainsMatch
-      });
-      
-      await referral.save();
-      
-      // If domains match, verify referral
-      if (emailDetails.domainsMatch) {
-        await this.verifyReferral(referral._id);
-      }
-      
-      logger.info(`Referral created: ${referral._id} from professional ${professional._id} for candidate ${candidate._id}`);
-      
-      return referral;
-    } catch (error) {
-      logger.error(`Failed to create referral from email: ${error.message}`);
-      throw new Error(`Failed to create referral from email: ${error.message}`);
-    }
-  }
-
-  // Manually create a referral
-  async createReferral(professionalId, candidateEmail, referralType = 'link') {
-    try {
-      const professional = await ProfessionalProfile.findById(professionalId);
-      if (!professional) {
-        throw new Error('Professional not found');
-      }
-      
-      const candidate = await User.findOne({ 
-        email: candidateEmail.toLowerCase(),
-        userType: 'candidate'
-      });
-      
-      if (!candidate) {
-        throw new Error('Candidate not found');
-      }
-      
-      // Check if referral already exists
-      const existingReferral = await Referral.findOne({
-        professional: professionalId,
-        candidate: candidate._id
-      });
-      
-      if (existingReferral) {
-        return existingReferral;
-      }
-      
-      const referral = new Referral({
-        professional: professionalId,
-        candidate: candidate._id,
-        referralType,
-        status: 'pending'
-      });
-      
-      await referral.save();
-      
-      // Send notification to candidate
-      await NotificationService.sendNotification(candidate._id, 'referralReceived', {
+      return {
+        success: true,
         referralId: referral._id,
-        professionalName: `${professional.user.firstName} ${professional.user.lastName}`
-      });
-      
-      logger.info(`Referral created: ${referral._id} from professional ${professionalId} for candidate ${candidate._id}`);
-      
-      return referral;
-    } catch (error) {
-      logger.error(`Failed to create referral: ${error.message}`);
-      throw new Error(`Failed to create referral: ${error.message}`);
-    }
-  }
-
-  // Get referral by ID
-  async getReferralById(referralId) {
-    try {
-      const referral = await Referral.findById(referralId)
-                                    .populate('professional')
-                                    .populate('candidate', '-password');
-      
-      if (!referral) {
-        throw new Error('Referral not found');
-      }
-      
-      return referral;
-    } catch (error) {
-      logger.error(`Failed to get referral: ${error.message}`);
-      throw new Error(`Failed to get referral: ${error.message}`);
-    }
-  }
-
-  // Get all referrals for a professional
-  async getProfessionalReferrals(professionalId) {
-    try {
-      return await Referral.find({ professional: professionalId })
-                          .populate('candidate', '-password')
-                          .sort({ createdAt: -1 })
-                          .exec();
-    } catch (error) {
-      logger.error(`Failed to get professional referrals: ${error.message}`);
-      throw new Error(`Failed to get professional referrals: ${error.message}`);
-    }
-  }
-
-  // Get all referrals for a candidate
-  async getCandidateReferrals(candidateId) {
-    try {
-      return await Referral.find({ candidate: candidateId })
-                          .populate('professional')
-                          .sort({ createdAt: -1 })
-                          .exec();
-    } catch (error) {
-      logger.error(`Failed to get candidate referrals: ${error.message}`);
-      throw new Error(`Failed to get candidate referrals: ${error.message}`);
-    }
-  }
-
-  // Verify a referral (confirm domain match or other verification)
-  async verifyReferral(referralId) {
-    try {
-      const referral = await Referral.findById(referralId);
-      
-      if (!referral) {
-        throw new Error('Referral not found');
-      }
-      
-      // If this is an email referral, verify domains match
-      if (referral.referralType === 'email') {
-        if (!referral.emailDetails || 
-            !referral.emailDetails.senderDomain || 
-            !referral.emailDetails.recipientDomain) {
-          throw new Error('Insufficient email details for verification');
-        }
-        
-        if (referral.emailDetails.senderDomain !== referral.emailDetails.recipientDomain) {
-          throw new Error('Email domains do not match');
-        }
-        
-      referral.emailDomainVerified = true;
-    }
-
-      // Check reward caps before marking verified
-      if (MAX_REWARD_PER_PRO > 0) {
-        const rewardedCount = await Referral.countDocuments({
-          professional: referral.professional,
-          status: 'rewarded'
-        });
-        if (rewardedCount >= MAX_REWARD_PER_PRO) {
-          logger.info(`Referral cap reached for professional ${referral.professional}`);
-          referral.status = 'rejected';
-          await referral.save();
-          return referral;
-        }
-      }
-
-      if (COOLDOWN_DAYS > 0) {
-        const lastReward = await Referral.findOne({
-          professional: referral.professional,
-          status: 'rewarded'
-        }).sort({ payoutDate: -1 });
-        if (lastReward && lastReward.payoutDate) {
-          const diffDays = (Date.now() - lastReward.payoutDate.getTime()) / (86400000);
-          if (diffDays < COOLDOWN_DAYS) {
-            logger.info(`Referral cooldown active for professional ${referral.professional}`);
-            referral.status = 'pending';
-            await referral.save();
-            return referral;
-          }
-        }
-      }
-
-      referral.status = 'verified';
-      referral.verificationDetails = {
-        verifiedAt: new Date(),
-        verificationMethod: referral.referralType === 'email' ? 'domain-match' : 'manual',
-        verifiedBy: null // System verification
+        verified: false,
+        reason: 'Domain mismatch - manual review required'
       };
       
-      await referral.save();
-      
-      // Send notifications
-      await NotificationService.sendNotification(referral.professional, 'referralVerified', {
-        referralId: referral._id
-      });
-      
-      logger.info(`Referral ${referralId} verified`);
-      
-      // Process reward payment
-      await PaymentService.processReferralPayment(referralId);
-      
-      return referral;
     } catch (error) {
-      logger.error(`Failed to verify referral: ${error.message}`);
-      throw new Error(`Failed to verify referral: ${error.message}`);
+      logger.error(`Error processing referral email: ${error.message}`);
+      throw error;
     }
   }
-
-  // Create verified referral directly (for testing or manual operations)
-  async createVerifiedReferral(professionalId, candidateId) {
+  
+  // New method: Verify referral and process payout in one step
+  async verifyAndPayReferral(referralId) {
     try {
-      const professional = await ProfessionalProfile.findById(professionalId);
-      if (!professional) {
-        throw new Error('Professional not found');
+      const referral = await this.getReferralById(referralId);
+      
+      if (!referral) {
+        throw new Error('Referral not found');
       }
       
-      const candidate = await User.findById(candidateId);
-      if (!candidate) {
-        throw new Error('Candidate not found');
+      // Verify email domains match
+      if (!this.validateEmailDomains(referral)) {
+        throw new Error('Email domains do not match');
       }
       
-      const referral = new Referral({
-        professional: professionalId,
-        candidate: candidateId,
-        referralType: 'email',
-        status: 'verified',
-        emailDomainVerified: true,
-        verificationDetails: {
-          verifiedAt: new Date(),
-          verificationMethod: 'manual',
-          verifiedBy: null
-        }
-      });
+      // Check business rules before payout
+      const canPayout = await this.checkPayoutEligibility(referral);
+      if (!canPayout.eligible) {
+        logger.info(`Referral ${referralId} not eligible for payout: ${canPayout.reason}`);
+        referral.status = 'verified'; // Verified but not paid
+        await referral.save();
+        return { verified: true, paid: false, reason: canPayout.reason };
+      }
       
+      // Mark as verified
+      referral.status = 'verified';
+      referral.emailDomainVerified = true;
+      referral.verificationDetails = {
+        verifiedAt: new Date(),
+        verificationMethod: 'automatic-domain-match',
+        verifiedBy: null
+      };
       await referral.save();
       
-      logger.info(`Verified referral created: ${referral._id}`);
+      // Process payout automatically
+      try {
+        const payoutResult = await PaymentService.processReferralPayment(referralId);
+        
+        // Send notifications
+        await NotificationService.sendNotification(referral.professional.user, 'referralRewarded', {
+          referralId: referral._id,
+          amount: payoutResult.amount,
+          candidateEmail: referral.candidate.email
+        });
+        
+        logger.info(`Referral ${referralId} verified and payout processed: $${payoutResult.amount}`);
+        
+        return {
+          verified: true,
+          paid: true,
+          amount: payoutResult.amount,
+          transferId: payoutResult.transferId
+        };
+        
+      } catch (payoutError) {
+        logger.error(`Payout failed for referral ${referralId}: ${payoutError.message}`);
+        return {
+          verified: true,
+          paid: false,
+          reason: 'Payout processing failed - will retry'
+        };
+      }
       
-      return referral;
     } catch (error) {
-      logger.error(`Failed to create verified referral: ${error.message}`);
-      throw new Error(`Failed to create verified referral: ${error.message}`);
+      logger.error(`Error in verifyAndPayReferral: ${error.message}`);
+      throw error;
     }
+  }
+  
+  // Check if referral is eligible for payout based on business rules
+  async checkPayoutEligibility(referral) {
+    const MAX_REWARD_PER_PRO = parseInt(process.env.MAX_REWARD_PER_PRO || '5', 10);
+    const COOLDOWN_DAYS = parseInt(process.env.COOLDOWN_DAYS || '7', 10);
+    
+    // Check maximum rewards per professional
+    if (MAX_REWARD_PER_PRO > 0) {
+      const rewardedCount = await Referral.countDocuments({
+        professional: referral.professional,
+        status: 'rewarded'
+      });
+      
+      if (rewardedCount >= MAX_REWARD_PER_PRO) {
+        return { eligible: false, reason: 'Maximum referral limit reached' };
+      }
+    }
+    
+    // Check cooldown period
+    if (COOLDOWN_DAYS > 0) {
+      const lastReward = await Referral.findOne({
+        professional: referral.professional,
+        status: 'rewarded'
+      }).sort({ payoutDate: -1 });
+      
+      if (lastReward && lastReward.payoutDate) {
+        const daysSinceLastReward = (Date.now() - lastReward.payoutDate.getTime()) / (1000 * 60 * 60 * 24);
+        if (daysSinceLastReward < COOLDOWN_DAYS) {
+          return { eligible: false, reason: `Cooldown period active (${COOLDOWN_DAYS - Math.floor(daysSinceLastReward)} days remaining)` };
+        }
+      }
+    }
+    
+    return { eligible: true };
+  }
+  
+  // Validate email domains match
+  validateEmailDomains(referral) {
+    if (!referral.emailDetails || 
+        !referral.emailDetails.senderDomain || 
+        !referral.emailDetails.recipientDomain) {
+      return false;
+    }
+    
+    return referral.emailDetails.senderDomain.toLowerCase() === 
+           referral.emailDetails.recipientDomain.toLowerCase();
   }
 }
 
-module.exports = new ReferralService(); 
+module.exports = new EnhancedReferralService();
