@@ -11,9 +11,9 @@ const logger = require('../utils/logger');
 /**
  * Payout processing job
  * Processes payouts for professionals based on their settings
- * Runs daily at 2:00 AM
+ * Runs every minute for near real-time payouts
  */
-const payoutJob = cron.schedule('0 2 * * *', async () => {
+const payoutJob = cron.schedule('*/1 * * * *', async () => {
   logger.info('Running professional payout job');
   
   try {
