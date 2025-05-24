@@ -7,6 +7,9 @@ const { validators, validate } = require("../utils/validators");
 // All routes require authentication
 router.use(authenticate);
 
+// Submit session request
+router.post('/request', SessionController.requestSession);
+
 // Create session
 router.post(
   "/",
@@ -39,6 +42,13 @@ router.put(
   "/:sessionId/reschedule",
   [validators.sessionId, validators.startTime, validators.endTime, validate],
   SessionController.rescheduleSession,
+);
+
+// Confirm session time
+router.post(
+  "/:sessionId/confirm",
+  [validators.sessionId, validators.startTime, validators.endTime, validate],
+  SessionController.confirmSession,
 );
 
 // Process payment for session
