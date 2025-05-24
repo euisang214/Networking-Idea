@@ -56,9 +56,9 @@ const RegisterForm = () => {
     } else if (values.password !== values.confirmPassword) {
       errors.confirmPassword = 'Passwords do not match';
     }
-
-    if (values.resume && values.resume.type && !values.resume.type.includes('pdf')) {
-      errors.resume = 'Resume must be a PDF file';
+ 
+    if (values.resume && values.resume.type && !["application/pdf","application/msword","application/vnd.openxmlformats-officedocument.wordprocessingml.document"].some(t => values.resume.type.includes(t))) {
+      errors.resume = 'Resume must be a PDF or Word document';
     }
     
     return errors;
@@ -179,9 +179,9 @@ const RegisterForm = () => {
         />
 
         <FileInput
-          label="Upload Resume (PDF)"
+          label="Upload Resume (PDF or Word doc)"
           name="resume"
-          accept="application/pdf"
+          accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           onChange={handleChange}
           error={errors.resume}
         />
