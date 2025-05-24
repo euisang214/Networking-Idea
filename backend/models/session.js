@@ -21,7 +21,7 @@ const sessionSchema = new Schema({
   },
   paymentStatus: {
     type: String,
-    enum: ['pending', 'authorized', 'paid', 'refunded', 'released'],
+    enum: ['pending', 'paid', 'refunded', 'released'],
     default: 'pending'
   },
   paymentId: {

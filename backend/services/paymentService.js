@@ -157,7 +157,7 @@ class PaymentService {
       
       // Update session with payment information
       session.paymentId = paymentIntent.id;
-      session.paymentStatus = 'authorized';
+      session.paymentStatus = 'paid';
       await session.save();
       
       // Send notifications
