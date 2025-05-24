@@ -15,64 +15,8 @@ const validateEvents = ajv.compile(eventSchema);
 
 // Handle email parsing for referral verification
 const handleReferralEmail = async (emailData) => {
-  try {
-    // Parse email data
-    const parsedEmail = EmailService.parseReferralEmail(emailData);
-    
-    if (!parsedEmail) {
-      logger.info('Email parsed but not recognized as referral email');
-      return null;
-    }
-    
-    // Check if platform email is CC'd
-    if (!parsedEmail.isPlatformCCd) {
-      logger.info(`Platform email not CC'd in email from ${parsedEmail.senderEmail}`);
-      return {
-        success: false,
-        reason: 'Platform email not CC\'d'
-      };
-    }
-    
-    // Check if domains match
-    if (!parsedEmail.domainsMatch) {
-      logger.info(`Domain mismatch in referral email: ${parsedEmail.senderDomain} vs ${parsedEmail.recipientDomain}`);
-      return {
-        success: false,
-        reason: 'Email domains do not match',
-        domains: {
-          sender: parsedEmail.senderDomain,
-          recipient: parsedEmail.recipientDomain
-        }
-      };
-    }
-    
-    // Create referral record
-    const referral = await ReferralService.createReferralFromEmail(parsedEmail);
-    
-    if (!referral) {
-      logger.info('Could not create referral from email');
-      return {
-        success: false,
-        reason: 'Could not create referral'
-      };
-    }
-    
-    // If domains match, verify referral and process reward
-    if (parsedEmail.domainsMatch) {
-      await ReferralService.verifyReferral(referral._id);
-    }
-    
-    logger.info(`Referral ${referral._id} created from email`);
-    
-    return {
-      success: true,
-      referralId: referral._id,
-      verified: parsedEmail.domainsMatch
-    };
-  } catch (error) {
-    logger.error(`Error handling referral email: ${error.message}`);
-    throw new ExternalServiceError(error.message, 'SendGrid');
-  }
+  const result = await referralService.processReferralEmail(emailData);
+  return responseFormatter.success(res, result || { processed: false });
 };
 
 // SendGrid inbound email parse webhook

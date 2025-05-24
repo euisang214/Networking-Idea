@@ -95,6 +95,49 @@ class SessionService {
     }
   }
 
+  // Create a new session request without a confirmed time
+  async createSessionRequest({ professionalId, userId, availabilities, notes }) {
+    try {
+      const professional = await ProfessionalProfile.findById(professionalId).populate('user');
+      if (!professional) {
+        throw new Error('Professional not found');
+      }
+
+      const user = await User.findById(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      const defaultDuration =
+        (professional.sessionSettings && professional.sessionSettings.defaultSessionLength) || 30;
+      const price = Math.round((professional.hourlyRate * defaultDuration) / 60);
+
+      const session = new Session({
+        professional: professionalId,
+        user: userId,
+        status: 'requested',
+        paymentStatus: 'pending',
+        price,
+        candidateAvailabilities: availabilities,
+        notes,
+      });
+
+      await session.save();
+
+      await NotificationService.sendNotification(professional.user._id, 'newSessionRequest', {
+        sessionId: session._id,
+        userName: `${user.firstName} ${user.lastName}`,
+      });
+
+      logger.info(`Session request ${session._id} created for professional ${professionalId}`);
+
+      return session;
+    } catch (error) {
+      logger.error(`Failed to create session request: ${error.message}`);
+      throw new Error(`Failed to create session request: ${error.message}`);
+    }
+  }
+
   // Find session by ID with populated relationships
   async getSessionById(sessionId, includePrivateData = false) {
     try {
@@ -254,6 +297,65 @@ class SessionService {
     } catch (error) {
       logger.error(`Failed to reschedule session: ${error.message}`);
       throw new Error(`Failed to reschedule session: ${error.message}`);
+    }
+  }
+
+  // Confirm a requested session time and create the Zoom meeting
+  async confirmSessionTime(sessionId, startTime, endTime) {
+    try {
+      const session = await Session.findById(sessionId)
+        .populate('professional')
+        .populate('user');
+
+      if (!session) {
+        throw new Error('Session not found');
+      }
+
+      if (session.status !== 'requested') {
+        throw new Error('Session is already scheduled');
+      }
+
+      const isAvailable = await this.checkAvailability(
+        session.professional._id,
+        startTime,
+        endTime,
+      );
+      if (!isAvailable) {
+        throw new Error('Professional is not available during this time slot');
+      }
+
+      const zoomMeeting = await ZoomService.createMeeting(
+        { startTime, endTime, _id: session._id },
+        session.professional,
+        session.user,
+      );
+
+      session.startTime = new Date(startTime);
+      session.endTime = new Date(endTime);
+      session.status = 'scheduled';
+      session.zoomMeetingId = zoomMeeting.meetingId;
+      session.zoomMeetingUrl = zoomMeeting.meetingUrl;
+      session.zoomMeetingPassword = zoomMeeting.password;
+
+      await session.save();
+
+      await NotificationService.sendNotification(session.user._id, 'sessionConfirmed', {
+        sessionId: session._id,
+        startTime,
+      });
+      await NotificationService.sendNotification(session.professional.user, 'sessionConfirmed', {
+        sessionId: session._id,
+        startTime,
+      });
+
+      await EmailService.sendSessionConfirmation(session, session.professional, session.user);
+
+      logger.info(`Session ${sessionId} confirmed and scheduled`);
+
+      return session;
+    } catch (error) {
+      logger.error(`Failed to confirm session time: ${error.message}`);
+      throw new Error(`Failed to confirm session time: ${error.message}`);
     }
   }
 

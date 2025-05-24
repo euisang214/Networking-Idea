@@ -1,42 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router-dom';
-import SessionsAPI from '../../api/sessions';
-import PaymentsAPI from '../../api/payments';
-import Button from '../common/Button';
-import SessionCalendar from './SessionCalendar';
-import Spinner from '../common/Spinner';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
-// Initialize Stripe
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
-
-// Booking form component
-const BookingForm = ({ professional, onCancel }) => {
-  const navigate = useNavigate();
+const EnhancedBookingForm = ({ professional, onCancel }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [step, setStep] = useState(1); // 1: DateTime, 2: Payment, 3: Confirmation
+  
+  // Form data
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
   const [notes, setNotes] = useState('');
-  const [step, setStep] = useState(1); // 1: Select date/time, 2: Payment
-  const [sessionId, setSessionId] = useState(null);
+  const [sessionData, setSessionData] = useState(null);
   
-  const handleDateSelect = (date) => {
-    setSelectedDate(date);
-    setSelectedTimeSlot(null);
-  };
-  
-  const handleTimeSlotSelect = (slot) => {
-    setSelectedTimeSlot(slot);
-  };
-  
-  const handleNotesChange = (e) => {
-    setNotes(e.target.value);
-  };
-  
-  const handleContinue = async () => {
+  // Step 1: Date and Time Selection
+  const handleContinueToPayment = async () => {
     if (!selectedDate || !selectedTimeSlot) {
       setError('Please select a date and time slot');
       return;
@@ -46,7 +23,7 @@ const BookingForm = ({ professional, onCancel }) => {
     setLoading(true);
     
     try {
-      // Create session reservation
+      // Create session (but don't confirm until payment)
       const startTime = new Date(selectedDate);
       startTime.setHours(selectedTimeSlot.hour, selectedTimeSlot.minute, 0, 0);
       
@@ -60,81 +37,182 @@ const BookingForm = ({ professional, onCancel }) => {
         notes
       });
       
-      setSessionId(session._id);
-      setStep(2); // Move to payment step
+      setSessionData(session);
+      setStep(2); // Move to payment
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to book session. Please try again.');
-      console.error('Error creating session:', err);
+      setError(err.response?.data?.message || 'Failed to create session. Please try again.');
     } finally {
       setLoading(false);
     }
   };
   
-  const handleBack = () => {
-    if (step === 2) {
-      setStep(1);
-    } else {
-      onCancel();
+  // Step 2: Payment Processing
+  const handlePayment = (e) => {
+    e.preventDefault();
+    
+    if (!sessionData) {
+      return;
     }
+    
+    setError('');
+    setLoading(true);
+    
+    // Mock payment processing for demo
+    setTimeout(() => {
+      setStep(3); // Move to confirmation
+      setLoading(false);
+    }, 2000);
   };
   
   // Calculate session cost
   const calculateSessionCost = () => {
     if (!selectedTimeSlot) return 0;
-    
     const sessionLengthHours = (professional.sessionSettings?.defaultSessionLength || 30) / 60;
     return professional.hourlyRate * sessionLengthHours;
   };
   
+  // Generate available time slots
+  const generateTimeSlots = (date) => {
+    const slots = [];
+    const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'lowercase' });
+    const dayAvailability = professional.availability?.find(a => a.day === dayOfWeek);
+    
+    if (!dayAvailability) return slots;
+    
+    const [startHour, startMinute] = dayAvailability.startTime.split(':').map(Number);
+    const [endHour, endMinute] = dayAvailability.endTime.split(':').map(Number);
+    
+    for (let hour = startHour; hour <= endHour; hour++) {
+      for (let minute of [0, 30]) {
+        if ((hour === startHour && minute < startMinute) ||
+            (hour === endHour && minute > endMinute)) {
+          continue;
+        }
+        
+        slots.push({
+          hour,
+          minute,
+          available: true, // TODO: Check against existing bookings
+          display: formatTime(hour, minute)
+        });
+      }
+    }
+    
+    return slots;
+  };
+  
+  const formatTime = (hour, minute) => {
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const formattedHour = hour % 12 || 12;
+    const formattedMinute = minute.toString().padStart(2, '0');
+    return `${formattedHour}:${formattedMinute} ${period}`;
+  };
+  
   return (
-    <div>
-      {step === 1 ? (
-        // Step 1: Select date and time
-        <>
-          <div className="mb-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Select a Date</h3>
-            <SessionCalendar 
-              professional={professional}
-              selectedDate={selectedDate}
-              onDateSelect={handleDateSelect}
+    <div className="max-w-2xl mx-auto p-6">
+      {/* Progress Indicator */}
+      <div className="mb-8">
+        <div className="flex items-center">
+          {[1, 2, 3].map((stepNumber) => (
+            <div key={stepNumber} className="flex items-center">
+              <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                step >= stepNumber 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-gray-200 text-gray-500'
+              }`}>
+                {stepNumber}
+              </div>
+              {stepNumber < 3 && (
+                <div className={`h-1 w-16 ${
+                  step > stepNumber ? 'bg-blue-600' : 'bg-gray-200'
+                }`} />
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-between text-sm text-gray-600 mt-2">
+          <span>Select Time</span>
+          <span>Payment</span>
+          <span>Confirmation</span>
+        </div>
+      </div>
+      
+      {/* Step Content */}
+      {step === 1 && (
+        <div>
+          <h3 className="text-xl font-semibold mb-4">Select Date & Time</h3>
+          
+          {/* Date Selection */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Select a Date
+            </label>
+            <input
+              type="date"
+              min={new Date().toISOString().split('T')[0]}
+              max={new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+              value={selectedDate || ''}
+              onChange={(e) => {
+                setSelectedDate(e.target.value);
+                setSelectedTimeSlot(null);
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
             />
           </div>
           
+          {/* Time Slots */}
           {selectedDate && (
-            <div className="mb-4">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Select a Time Slot</h3>
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Available Times
+              </label>
               <div className="grid grid-cols-3 gap-2">
-                {generateTimeSlots(professional, selectedDate).map((slot, index) => (
+                {generateTimeSlots(selectedDate).map((slot, index) => (
                   <button
                     key={index}
                     type="button"
-                    className={`py-2 px-4 text-center rounded-md ${
-                      selectedTimeSlot && 
-                      selectedTimeSlot.hour === slot.hour && 
-                      selectedTimeSlot.minute === slot.minute
+                    className={`py-2 px-4 text-center rounded-md transition-colors ${
+                      selectedTimeSlot?.hour === slot.hour && selectedTimeSlot?.minute === slot.minute
                         ? 'bg-blue-600 text-white'
                         : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                     }`}
-                    onClick={() => handleTimeSlotSelect(slot)}
+                    onClick={() => setSelectedTimeSlot(slot)}
                     disabled={!slot.available}
                   >
-                    {formatTime(slot.hour, slot.minute)}
+                    {slot.display}
                   </button>
                 ))}
               </div>
             </div>
           )}
           
-          <div className="mb-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Session Notes</h3>
+          {/* Notes */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Session Notes (Optional)
+            </label>
             <textarea
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
               rows="3"
-              placeholder="What would you like to discuss? Any specific questions or topics?"
+              placeholder="What would you like to discuss?"
               value={notes}
-              onChange={handleNotesChange}
-            ></textarea>
+              onChange={(e) => setNotes(e.target.value)}
+            />
           </div>
+          
+          {/* Session Summary */}
+          {selectedTimeSlot && (
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+              <h4 className="font-medium text-gray-900 mb-2">Session Summary</h4>
+              <div className="space-y-1 text-sm text-gray-600">
+                <p><span className="font-medium">Professional:</span> {professional.user.firstName} {professional.user.lastName}</p>
+                <p><span className="font-medium">Date:</span> {new Date(selectedDate).toLocaleDateString()}</p>
+                <p><span className="font-medium">Time:</span> {selectedTimeSlot.display}</p>
+                <p><span className="font-medium">Duration:</span> {professional.sessionSettings?.defaultSessionLength || 30} minutes</p>
+                <p><span className="font-medium">Cost:</span> ${calculateSessionCost().toFixed(2)}</p>
+              </div>
+            </div>
+          )}
           
           {error && (
             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
@@ -142,247 +220,117 @@ const BookingForm = ({ professional, onCancel }) => {
             </div>
           )}
           
-          {selectedTimeSlot && (
-            <div className="mb-4 p-4 bg-gray-50 rounded-md">
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="font-medium text-gray-900">Session Summary</p>
-                  <p className="text-gray-600">
-                    {formatDate(selectedDate)} at {formatTime(selectedTimeSlot.hour, selectedTimeSlot.minute)}
-                  </p>
-                  <p className="text-gray-600">
-                    {professional.sessionSettings?.defaultSessionLength || 30} minutes with {professional.user.firstName} {professional.user.lastName}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-gray-600">Total</p>
-                  <p className="text-xl font-bold text-gray-900">
-                    ${calculateSessionCost().toFixed(2)}
-                  </p>
-                </div>
+          <div className="flex justify-between">
+            <button 
+              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+              onClick={onCancel}
+            >
+              Cancel
+            </button>
+            <button 
+              className={`px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 ${(!selectedTimeSlot || loading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              onClick={handleContinueToPayment}
+              disabled={!selectedTimeSlot || loading}
+            >
+              {loading ? 'Loading...' : 'Continue to Payment'}
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {step === 2 && (
+        <div>
+          <h3 className="text-xl font-semibold mb-4">Payment Details</h3>
+          
+          <form onSubmit={handlePayment}>
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Card Information
+              </label>
+              <div className="border border-gray-300 rounded-md p-3">
+                <input
+                  type="text"
+                  placeholder="1234 5678 9012 3456"
+                  className="w-full border-none outline-none"
+                />
               </div>
             </div>
-          )}
-          
-          <div className="flex justify-between mt-6">
-            <Button variant="light" onClick={handleBack}>
-              Cancel
-            </Button>
-            <Button 
-              variant="primary" 
-              onClick={handleContinue} 
-              disabled={!selectedTimeSlot || loading}
-              isLoading={loading}
-            >
-              Continue to Payment
-            </Button>
+            
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-gray-900">Total Amount</span>
+                <span className="text-xl font-bold text-gray-900">
+                  ${calculateSessionCost().toFixed(2)}
+                </span>
+              </div>
+            </div>
+            
+            {error && (
+              <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                {error}
+              </div>
+            )}
+            
+            <div className="flex justify-between">
+              <button 
+                type="button" 
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                onClick={() => setStep(1)}
+                disabled={loading}
+              >
+                Back
+              </button>
+              <button 
+                type="submit" 
+                className={`px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 ${loading ? 'opacity-50' : ''}`}
+                disabled={loading}
+              >
+                {loading ? 'Processing...' : `Pay ${calculateSessionCost().toFixed(2)}`}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+      
+      {step === 3 && (
+        <div className="text-center">
+          <div className="mb-6">
+            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+              <svg className="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              Session Booked Successfully!
+            </h3>
+            <p className="text-gray-600">
+              You'll receive a confirmation email with Zoom meeting details shortly.
+            </p>
           </div>
-        </>
-      ) : (
-        // Step 2: Payment
-        <Elements stripe={stripePromise}>
-          <PaymentForm 
-            sessionId={sessionId} 
-            amount={calculateSessionCost()}
-            onBack={handleBack}
-            onSuccess={() => navigate('/sessions')}
-          />
-        </Elements>
+          
+          <div className="space-y-3">
+            <button 
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              onClick={() => alert('Navigate to sessions')}
+            >
+              View My Sessions
+            </button>
+            <button 
+              className="w-full px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+              onClick={onCancel}
+            >
+              Continue Browsing
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
 };
 
-// Payment form component
-const PaymentForm = ({ sessionId, amount, onBack, onSuccess }) => {
-  const stripe = useStripe();
-  const elements = useElements();
-  const [error, setError] = useState('');
-  const [processing, setProcessing] = useState(false);
-  const [succeeded, setSucceeded] = useState(false);
-  
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!stripe || !elements) {
-      // Stripe.js has not loaded yet
-      return;
-    }
-    
-    setError('');
-    setProcessing(true);
-    
-    try {
-      // Create payment method
-      const { error, paymentMethod } = await stripe.createPaymentMethod({
-        type: 'card',
-        card: elements.getElement(CardElement)
-      });
-      
-      if (error) {
-        setError(error.message);
-        setProcessing(false);
-        return;
-      }
-      
-      // Process payment
-      const result = await PaymentsAPI.processSessionPayment(
-        sessionId,
-        paymentMethod.id
-      );
-      
-      if (result.success) {
-        setSucceeded(true);
-        setTimeout(() => {
-          onSuccess();
-        }, 1500);
-      } else {
-        setError('Payment failed. Please try again.');
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || 'Payment failed. Please try again.');
-      console.error('Error processing payment:', err);
-    } finally {
-      setProcessing(false);
-    }
-  };
-  
-  return (
-    <form onSubmit={handleSubmit}>
-      <h3 className="text-lg font-medium text-gray-900 mb-4">Payment Details</h3>
-      
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Card Information
-        </label>
-        <div className="border border-gray-300 rounded-md p-3 focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500">
-          <CardElement 
-            options={{
-              style: {
-                base: {
-                  fontSize: '16px',
-                  color: '#424770',
-                  '::placeholder': {
-                    color: '#aab7c4',
-                  },
-                },
-                invalid: {
-                  color: '#9e2146',
-                },
-              },
-            }}
-          />
-        </div>
-      </div>
-      
-      {error && (
-        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-          {error}
-        </div>
-      )}
-      
-      {succeeded && (
-        <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
-          Payment successful! Redirecting to your sessions...
-        </div>
-      )}
-      
-      <div className="mb-4 p-4 bg-gray-50 rounded-md">
-        <div className="flex justify-between items-center">
-          <p className="font-medium text-gray-900">Total Amount</p>
-          <p className="text-xl font-bold text-gray-900">
-            ${amount.toFixed(2)}
-          </p>
-        </div>
-      </div>
-      
-      <div className="flex justify-between mt-6">
-        <Button 
-          type="button" 
-          variant="light" 
-          onClick={onBack}
-          disabled={processing || succeeded}
-        >
-          Back
-        </Button>
-        <Button 
-          type="submit" 
-          variant="primary"
-          isLoading={processing}
-          disabled={!stripe || processing || succeeded}
-        >
-          {processing ? 'Processing...' : succeeded ? 'Payment Successful' : `Pay $${amount.toFixed(2)}`}
-        </Button>
-      </div>
-    </form>
-  );
-};
-
-// Helper functions
-const generateTimeSlots = (professional, date) => {
-  // This is a simplified version - in a real app, you'd check the professional's availability
-  // and existing bookings to generate available time slots
-  const slots = [];
-  const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'lowercase' });
-  
-  // Find availability for the selected day
-  const dayAvailability = professional.availability.find(a => a.day === dayOfWeek);
-  
-  if (!dayAvailability) {
-    return slots;
-  }
-  
-  // Parse start and end times
-  const [startHour, startMinute] = dayAvailability.startTime.split(':').map(Number);
-  const [endHour, endMinute] = dayAvailability.endTime.split(':').map(Number);
-  
-  // Generate slots in 30-minute increments
-  for (let hour = startHour; hour <= endHour; hour++) {
-    for (let minute of [0, 30]) {
-      // Skip if before start time or after end time
-      if (
-        (hour === startHour && minute < startMinute) ||
-        (hour === endHour && minute > endMinute)
-      ) {
-        continue;
-      }
-      
-      slots.push({
-        hour,
-        minute,
-        available: true // In a real app, check against existing bookings
-      });
-    }
-  }
-  
-  return slots;
-};
-
-const formatTime = (hour, minute) => {
-  const period = hour >= 12 ? 'PM' : 'AM';
-  const formattedHour = hour % 12 || 12;
-  const formattedMinute = minute.toString().padStart(2, '0');
-  return `${formattedHour}:${formattedMinute} ${period}`;
-};
-
-const formatDate = (date) => {
-  return new Date(date).toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric'
-  });
-};
-
-BookingForm.propTypes = {
+EnhancedBookingForm.propTypes = {
   professional: PropTypes.object.isRequired,
   onCancel: PropTypes.func.isRequired
 };
 
-PaymentForm.propTypes = {
-  sessionId: PropTypes.string.isRequired,
-  amount: PropTypes.number.isRequired,
-  onBack: PropTypes.func.isRequired,
-  onSuccess: PropTypes.func.isRequired
-};
-
-export default BookingForm;
+export default EnhancedBookingForm;
