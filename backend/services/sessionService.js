@@ -1,81 +1,93 @@
-const Session = require('../models/session');
-const SessionVerification = require('../models/sessionVerification');
-const User = require('../models/user');
-const ProfessionalProfile = require('../models/professionalProfile');
-const NotificationService = require('./notificationService');
-const ZoomService = require('./zoomService');
-const EmailService = require('./emailService');
-const logger = require('../utils/logger');
+const Session = require("../models/session");
+const SessionVerification = require("../models/sessionVerification");
+const User = require("../models/user");
+const ProfessionalProfile = require("../models/professionalProfile");
+const NotificationService = require("./notificationService");
+const ZoomService = require("./zoomService");
+const EmailService = require("./emailService");
+const logger = require("../utils/logger");
 
 class SessionService {
   // Create a new session
   async createSession(sessionData) {
     try {
       const { professionalId, userId, startTime, endTime, notes } = sessionData;
-      
+
       // Validate professional and user
-      const professional = await ProfessionalProfile.findById(professionalId).populate('user');
+      const professional =
+        await ProfessionalProfile.findById(professionalId).populate("user");
       if (!professional) {
-        throw new Error('Professional not found');
+        throw new Error("Professional not found");
       }
-      
+
       const user = await User.findById(userId);
       if (!user) {
-        throw new Error('User not found');
+        throw new Error("User not found");
       }
-      
+
       // Check professional availability
-      const isAvailable = await this.checkAvailability(professionalId, startTime, endTime);
+      const isAvailable = await this.checkAvailability(
+        professionalId,
+        startTime,
+        endTime,
+      );
       if (!isAvailable) {
-        throw new Error('Professional is not available during this time slot');
+        throw new Error("Professional is not available during this time slot");
       }
-      
+
       // Calculate session price based on professional's hourly rate
-      const durationHours = (new Date(endTime) - new Date(startTime)) / (1000 * 60 * 60);
+      const durationHours =
+        (new Date(endTime) - new Date(startTime)) / (1000 * 60 * 60);
       const price = Math.round(professional.hourlyRate * durationHours);
-      
+
       // Create Zoom meeting
       const zoomMeeting = await ZoomService.createMeeting(
-        { startTime, endTime, _id: 'temp' }, // Temporary session object for Zoom service
+        { startTime, endTime, _id: "temp" }, // Temporary session object for Zoom service
         professional,
-        user
+        user,
       );
-      
+
       // Create session
       const session = new Session({
         professional: professionalId,
         user: userId,
         startTime: new Date(startTime),
         endTime: new Date(endTime),
-        status: 'scheduled',
-        paymentStatus: 'pending',
+        status: "scheduled",
+        paymentStatus: "pending",
         price,
         zoomMeetingId: zoomMeeting.meetingId,
         zoomMeetingUrl: zoomMeeting.meetingUrl,
         zoomMeetingPassword: zoomMeeting.password,
-        notes
+        notes,
       });
-      
+
       await session.save();
-      
+
       // Send notifications
-      await NotificationService.sendNotification(userId, 'sessionCreated', {
+      await NotificationService.sendNotification(userId, "sessionCreated", {
         sessionId: session._id,
         professionalName: `${professional.user.firstName} ${professional.user.lastName}`,
-        startTime
+        startTime,
       });
-      
-      await NotificationService.sendNotification(professional.user._id, 'newSession', {
-        sessionId: session._id,
-        userName: `${user.firstName} ${user.lastName}`,
-        startTime
-      });
+
+      await NotificationService.sendNotification(
+        professional.user._id,
+        "newSession",
+        {
+          sessionId: session._id,
+          userName: `${user.firstName} ${user.lastName}`,
+          startTime,
+        },
+      );
 
       // Send confirmation emails
       await EmailService.sendSessionConfirmation(session, professional, user);
-      
-      logger.info(`Session created: ${session._id} between professional ${professionalId} and user ${userId}`);
-      
+
+      logger.info(
+        `Session created: ${session._id} between professional ${professionalId} and user ${userId}`,
+      );
+
       return session;
     } catch (error) {
       logger.error(`Failed to create session: ${error.message}`);
@@ -87,21 +99,21 @@ class SessionService {
   async getSessionById(sessionId, includePrivateData = false) {
     try {
       const query = Session.findById(sessionId)
-                          .populate('user', '-password')
-                          .populate({
-                            path: 'professional',
-                            populate: {
-                              path: 'user',
-                              select: includePrivateData ? '-password' : 'firstName lastName' 
-                            }
-                          });
-      
+        .populate("user", "-password")
+        .populate({
+          path: "professional",
+          populate: {
+            path: "user",
+            select: includePrivateData ? "-password" : "firstName lastName",
+          },
+        });
+
       const session = await query.exec();
-      
+
       if (!session) {
-        throw new Error('Session not found');
+        throw new Error("Session not found");
       }
-      
+
       return session;
     } catch (error) {
       logger.error(`Failed to get session: ${error.message}`);
@@ -113,9 +125,9 @@ class SessionService {
   async getUserSessions(userId) {
     try {
       return await Session.find({ user: userId })
-                         .populate('professional')
-                         .sort({ startTime: -1 })
-                         .exec();
+        .populate("professional")
+        .sort({ startTime: -1 })
+        .exec();
     } catch (error) {
       logger.error(`Failed to get user sessions: ${error.message}`);
       throw new Error(`Failed to get user sessions: ${error.message}`);
@@ -126,9 +138,9 @@ class SessionService {
   async getProfessionalSessions(professionalId) {
     try {
       return await Session.find({ professional: professionalId })
-                         .populate('user', '-password')
-                         .sort({ startTime: -1 })
-                         .exec();
+        .populate("user", "-password")
+        .sort({ startTime: -1 })
+        .exec();
     } catch (error) {
       logger.error(`Failed to get professional sessions: ${error.message}`);
       throw new Error(`Failed to get professional sessions: ${error.message}`);
@@ -139,33 +151,41 @@ class SessionService {
   async updateSessionStatus(sessionId, status) {
     try {
       const session = await Session.findById(sessionId);
-      
+
       if (!session) {
-        throw new Error('Session not found');
+        throw new Error("Session not found");
       }
-      
+
       session.status = status;
-      
-      if (status === 'cancelled') {
+
+      if (status === "cancelled") {
         // Handle cancellation logic
         // Add refund logic if needed
       }
-      
+
       await session.save();
-      
+
       // Send notifications
-      await NotificationService.sendNotification(session.user, 'sessionStatusChanged', {
-        sessionId: session._id,
-        status
-      });
-      
-      await NotificationService.sendNotification(session.professional, 'sessionStatusChanged', {
-        sessionId: session._id,
-        status
-      });
-      
+      await NotificationService.sendNotification(
+        session.user,
+        "sessionStatusChanged",
+        {
+          sessionId: session._id,
+          status,
+        },
+      );
+
+      await NotificationService.sendNotification(
+        session.professional,
+        "sessionStatusChanged",
+        {
+          sessionId: session._id,
+          status,
+        },
+      );
+
       logger.info(`Session ${sessionId} status updated to ${status}`);
-      
+
       return session;
     } catch (error) {
       logger.error(`Failed to update session status: ${error.message}`);
@@ -173,60 +193,130 @@ class SessionService {
     }
   }
 
+  // Reschedule session
+  async rescheduleSession(sessionId, startTime, endTime) {
+    try {
+      const session = await Session.findById(sessionId)
+        .populate("professional")
+        .populate("user");
+
+      if (!session) {
+        throw new Error("Session not found");
+      }
+
+      const isAvailable = await this.checkAvailability(
+        session.professional._id,
+        startTime,
+        endTime,
+      );
+      if (!isAvailable) {
+        throw new Error("Professional is not available during this time slot");
+      }
+
+      session.startTime = new Date(startTime);
+      session.endTime = new Date(endTime);
+
+      if (session.zoomMeetingId) {
+        try {
+          await ZoomService.updateMeeting(
+            session.zoomMeetingId,
+            session,
+            session.professional,
+            session.user,
+          );
+        } catch (err) {
+          logger.error(`Failed to update Zoom meeting: ${err.message}`);
+        }
+      }
+
+      await session.save();
+
+      await NotificationService.sendNotification(
+        session.user._id,
+        "sessionRescheduled",
+        {
+          sessionId: session._id,
+          startTime,
+        },
+      );
+      await NotificationService.sendNotification(
+        session.professional.user,
+        "sessionRescheduled",
+        {
+          sessionId: session._id,
+          startTime,
+        },
+      );
+
+      logger.info(`Session ${sessionId} rescheduled`);
+
+      return session;
+    } catch (error) {
+      logger.error(`Failed to reschedule session: ${error.message}`);
+      throw new Error(`Failed to reschedule session: ${error.message}`);
+    }
+  }
+
   // Check if a professional is available during a specific time slot
   async checkAvailability(professionalId, startTime, endTime) {
     try {
       const professional = await ProfessionalProfile.findById(professionalId);
-      
+
       if (!professional) {
-        throw new Error('Professional not found');
+        throw new Error("Professional not found");
       }
-      
+
       // Convert to Date objects
       const start = new Date(startTime);
       const end = new Date(endTime);
-      
+
       // Check if time slot falls within professional's availability
-      const dayOfWeek = start.toLocaleDateString('en-US', { weekday: 'lowercase' });
-      const availableDay = professional.availability.find(a => a.day === dayOfWeek);
-      
+      const dayOfWeek = start.toLocaleDateString("en-US", {
+        weekday: "lowercase",
+      });
+      const availableDay = professional.availability.find(
+        (a) => a.day === dayOfWeek,
+      );
+
       if (!availableDay) {
         return false;
       }
-      
+
       const startHour = start.getHours() + start.getMinutes() / 60;
       const endHour = end.getHours() + end.getMinutes() / 60;
-      
-      const availableStartHour = parseInt(availableDay.startTime.split(':')[0]) +
-                               parseInt(availableDay.startTime.split(':')[1]) / 60;
-      const availableEndHour = parseInt(availableDay.endTime.split(':')[0]) +
-                             parseInt(availableDay.endTime.split(':')[1]) / 60;
-      
+
+      const availableStartHour =
+        parseInt(availableDay.startTime.split(":")[0]) +
+        parseInt(availableDay.startTime.split(":")[1]) / 60;
+      const availableEndHour =
+        parseInt(availableDay.endTime.split(":")[0]) +
+        parseInt(availableDay.endTime.split(":")[1]) / 60;
+
       if (startHour < availableStartHour || endHour > availableEndHour) {
         return false;
       }
-      
+
       // Check if there are any overlapping sessions
       const overlappingSessions = await Session.countDocuments({
         professional: professionalId,
-        status: { $nin: ['cancelled', 'no-show'] },
+        status: { $nin: ["cancelled", "no-show"] },
         $or: [
           // Session starts during the requested slot
           {
-            startTime: { $gte: start, $lt: end }
+            startTime: { $gte: start, $lt: end },
           },
           // Session ends during the requested slot
           {
-            endTime: { $gt: start, $lte: end }
+            endTime: { $gt: start, $lte: end },
           },
           // Session encompasses the requested slot
           {
             startTime: { $lte: start },
-            endTime: { $gte: end }
-          }
-        ]
+            endTime: { $gte: end },
+          },
+        ],
       });
-      
+
       return overlappingSessions === 0;
     } catch (error) {
       logger.error(`Failed to check availability: ${error.message}`);
@@ -239,8 +329,12 @@ class SessionService {
     try {
       return await Session.findOne({ zoomMeetingId: meetingId });
     } catch (error) {
-      logger.error(`Failed to find session by Zoom meeting ID: ${error.message}`);
-      throw new Error(`Failed to find session by Zoom meeting ID: ${error.message}`);
+      logger.error(
+        `Failed to find session by Zoom meeting ID: ${error.message}`,
+      );
+      throw new Error(
+        `Failed to find session by Zoom meeting ID: ${error.message}`,
+      );
     }
   }
 
@@ -248,26 +342,26 @@ class SessionService {
   async markAsVerified(sessionId, meetingDetails) {
     try {
       const session = await Session.findById(sessionId);
-      
+
       if (!session) {
-        throw new Error('Session not found');
+        throw new Error("Session not found");
       }
-      
+
       await session.markAsVerified(
         meetingDetails.duration,
-        meetingDetails.participantCount
+        meetingDetails.participantCount,
       );
 
       await SessionVerification.create({
         session: session._id,
         verified: true,
-        method: meetingDetails.method || 'manual',
+        method: meetingDetails.method || "manual",
         meetingDuration: meetingDetails.duration,
-        participantCount: meetingDetails.participantCount
+        participantCount: meetingDetails.participantCount,
       });
-      
+
       logger.info(`Session ${sessionId} marked as verified`);
-      
+
       return session;
     } catch (error) {
       logger.error(`Failed to mark session as verified: ${error.message}`);
@@ -279,30 +373,32 @@ class SessionService {
   async addFeedback(sessionId, userId, rating, comment) {
     try {
       const session = await Session.findById(sessionId);
-      
+
       if (!session) {
-        throw new Error('Session not found');
+        throw new Error("Session not found");
       }
-      
+
       // Verify user is authorized to add feedback
       if (session.user.toString() !== userId) {
-        throw new Error('Unauthorized to add feedback to this session');
+        throw new Error("Unauthorized to add feedback to this session");
       }
-      
+
       session.feedback = {
         rating,
         comment,
-        providedAt: new Date()
+        providedAt: new Date(),
       };
-      
+
       await session.save();
-      
+
       // Update professional's average rating
-      const professional = await ProfessionalProfile.findById(session.professional);
+      const professional = await ProfessionalProfile.findById(
+        session.professional,
+      );
       await professional.updateStatistics();
-      
+
       logger.info(`Feedback added to session ${sessionId}`);
-      
+
       return session;
     } catch (error) {
       logger.error(`Failed to add feedback: ${error.message}`);
