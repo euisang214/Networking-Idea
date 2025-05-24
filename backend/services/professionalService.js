@@ -150,7 +150,6 @@ class ProfessionalService {
         if (updateData.company) {
           profile.company = updateData.company;
           
-          // Get company name for anonymization
           const company = await Company.findById(updateData.company);
           if (company) {
             profile.companyName = company.name;
@@ -252,18 +251,6 @@ class ProfessionalService {
     }
   }
 
-  // Deprecated anonymization method retained for backward compatibility
-  async anonymizeProfile(profileId) {
-    const profile = await ProfessionalProfile.findById(profileId)
-                                           .populate('company')
-                                           .populate('industry');
-
-    if (!profile) {
-      throw new Error('Professional profile not found');
-    }
-
-    return profile;
-  }
 }
 
 module.exports = new ProfessionalService();
