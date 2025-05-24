@@ -99,30 +99,22 @@ const SessionController = {
   getUserSessions: async (req, res, next) => {
     try {
       const userId = req.user.id;
+
       const { status, limit = 10, page = 1 } = req.query;
 
-      const skip = (page - 1) * limit;
-
-      // Get sessions
-      const sessions = await SessionService.getUserSessions(userId);
-
-      // Filter by status if provided
-      const filteredSessions = status
-        ? sessions.filter((session) => session.status === status)
-        : sessions;
-
-      // Paginate
-      const paginatedSessions = filteredSessions.slice(
-        skip,
-        skip + parseInt(limit),
+      const { sessions, total } = await SessionService.getUserSessions(
+        userId,
+        status,
+        parseInt(limit),
+        parseInt(page),
       );
 
       return responseFormatter.paginated(
         res,
-        paginatedSessions,
+        sessions,
         parseInt(page),
         parseInt(limit),
-        filteredSessions.length,
+        total,
         "Sessions retrieved successfully",
       );
     } catch (error) {
@@ -147,30 +139,19 @@ const SessionController = {
         throw new ValidationError("You do not have a professional profile");
       }
 
-      const skip = (page - 1) * limit;
-
-      // Get sessions
-      const sessions = await SessionService.getProfessionalSessions(
+      const { sessions, total } = await SessionService.getProfessionalSessions(
         professionalProfile._id,
-      );
-
-      // Filter by status if provided
-      const filteredSessions = status
-        ? sessions.filter((session) => session.status === status)
-        : sessions;
-
-      // Paginate
-      const paginatedSessions = filteredSessions.slice(
-        skip,
-        skip + parseInt(limit),
+        status,
+        parseInt(limit),
+        parseInt(page),
       );
 
       return responseFormatter.paginated(
         res,
-        paginatedSessions,
+        sessions,
         parseInt(page),
         parseInt(limit),
-        filteredSessions.length,
+        total,
         "Sessions retrieved successfully",
       );
     } catch (error) {
