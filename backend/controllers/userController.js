@@ -182,7 +182,7 @@ const UserController = {
         throw new ValidationError('Google account not connected');
       }
       const now = new Date();
-      const week = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const week = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
       const busy = await GoogleService.getAvailability(
         user.googleAccessToken,
         now.toISOString(),

@@ -12,18 +12,12 @@ const sessionSchema = new Schema({
     ref: 'User',
     required: true
   },
-  startTime: {
-    type: Date,
-    required: true
-  },
-  endTime: {
-    type: Date,
-    required: true
-  },
+  startTime: Date,
+  endTime: Date,
   status: {
     type: String,
-    enum: ['scheduled', 'in-progress', 'completed', 'cancelled', 'no-show'],
-    default: 'scheduled'
+    enum: ['requested', 'scheduled', 'in-progress', 'completed', 'cancelled', 'no-show'],
+    default: 'requested'
   },
   paymentStatus: {
     type: String,
@@ -55,6 +49,12 @@ const sessionSchema = new Schema({
     participantCount: Number,
     verifiedAt: Date
   },
+  candidateAvailabilities: [
+    {
+      startTime: Date,
+      endTime: Date,
+    },
+  ],
   notes: {
     type: String
   },
@@ -86,6 +86,7 @@ sessionSchema.index({ zoomMeetingId: 1 });
 
 // Virtuals
 sessionSchema.virtual('duration').get(function() {
+  if (!this.startTime || !this.endTime) return 0;
   return (this.endTime - this.startTime) / (1000 * 60); // Duration in minutes
 });
 
