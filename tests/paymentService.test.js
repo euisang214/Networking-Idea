@@ -104,12 +104,12 @@ describe('payment service', () => {
   it('creates payment intent with manual capture', async () => {
     await PaymentService.processSessionPayment('sess1', 'pm_1', 'user1');
     expect(paymentIntentCreateSpy.mock.calls[0][0].capture_method).toBe('manual');
-    expect(mockSession.paymentStatus).toBe('authorized');
+    expect(mockSession.paymentStatus).toBe('paid');
   });
 
   it('captures intent and transfers funds on release', async () => {
     mockSession.paymentId = 'pi_1';
-    mockSession.paymentStatus = 'authorized';
+    mockSession.paymentStatus = 'paid';
     await PaymentService.releaseSessionPayment('sess1');
     expect(paymentIntentCaptureSpy).toHaveBeenCalledWith('pi_1');
     expect(transferSpy).toHaveBeenCalled();
