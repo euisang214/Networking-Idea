@@ -164,26 +164,50 @@ class SessionService {
     }
   }
 
-  // Find sessions for a specific user
-  async getUserSessions(userId) {
+  // Find sessions for a specific user with optional pagination
+  async getUserSessions(userId, status = null, limit = 10, page = 1) {
     try {
-      return await Session.find({ user: userId })
-        .populate("professional")
-        .sort({ startTime: -1 })
-        .exec();
+      const filter = { user: userId };
+      if (status) filter.status = status;
+
+      const skip = (page - 1) * limit;
+
+      const [sessions, total] = await Promise.all([
+        Session.find(filter)
+          .populate("professional")
+          .sort({ startTime: -1 })
+          .skip(skip)
+          .limit(parseInt(limit))
+          .exec(),
+        Session.countDocuments(filter)
+      ]);
+
+      return { sessions, total };
     } catch (error) {
       logger.error(`Failed to get user sessions: ${error.message}`);
       throw new Error(`Failed to get user sessions: ${error.message}`);
     }
   }
 
-  // Find sessions for a specific professional
-  async getProfessionalSessions(professionalId) {
+  // Find sessions for a specific professional with optional pagination
+  async getProfessionalSessions(professionalId, status = null, limit = 10, page = 1) {
     try {
-      return await Session.find({ professional: professionalId })
-        .populate("user", "-password")
-        .sort({ startTime: -1 })
-        .exec();
+      const filter = { professional: professionalId };
+      if (status) filter.status = status;
+
+      const skip = (page - 1) * limit;
+
+      const [sessions, total] = await Promise.all([
+        Session.find(filter)
+          .populate("user", "-password")
+          .sort({ startTime: -1 })
+          .skip(skip)
+          .limit(parseInt(limit))
+          .exec(),
+        Session.countDocuments(filter)
+      ]);
+
+      return { sessions, total };
     } catch (error) {
       logger.error(`Failed to get professional sessions: ${error.message}`);
       throw new Error(`Failed to get professional sessions: ${error.message}`);
