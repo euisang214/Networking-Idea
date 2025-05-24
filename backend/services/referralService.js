@@ -138,7 +138,7 @@ class ReferralService {
       // Send notification to candidate
       await NotificationService.sendNotification(candidate._id, 'referralReceived', {
         referralId: referral._id,
-        professionalName: professional.anonymizedProfile.displayName
+        professionalName: `${professional.user.firstName} ${professional.user.lastName}`
       });
       
       logger.info(`Referral created: ${referral._id} from professional ${professionalId} for candidate ${candidate._id}`);

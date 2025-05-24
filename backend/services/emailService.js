@@ -166,8 +166,8 @@ class EmailService {
       'session-confirmation-user',
       {
         userName: `${user.firstName} ${user.lastName}`,
-        professionalName: professional.anonymizedProfile.displayName,
-        professionalTitle: professional.anonymizedProfile.anonymizedTitle,
+        professionalName: `${professional.user.firstName} ${professional.user.lastName}`,
+        professionalTitle: professional.title,
         sessionDate: new Date(session.startTime).toLocaleDateString(),
         sessionTime: new Date(session.startTime).toLocaleTimeString(),
         sessionDuration: (session.endTime - session.startTime) / (1000 * 60), // minutes

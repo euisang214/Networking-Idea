@@ -151,7 +151,7 @@ const BookingForm = ({ professional, onCancel }) => {
                     {formatDate(selectedDate)} at {formatTime(selectedTimeSlot.hour, selectedTimeSlot.minute)}
                   </p>
                   <p className="text-gray-600">
-                    {professional.sessionSettings?.defaultSessionLength || 30} minutes with {professional.anonymizedProfile.displayName}
+                    {professional.sessionSettings?.defaultSessionLength || 30} minutes with {professional.user.firstName} {professional.user.lastName}
                   </p>
                 </div>
                 <div className="text-right">

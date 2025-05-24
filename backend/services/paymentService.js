@@ -53,7 +53,7 @@ class PaymentService {
         capture_method: 'manual',
         off_session: false,
         confirm: true,
-        description: `Session with ${session.professional.anonymizedProfile.displayName}`,
+        description: `Session with ${session.professional.user.firstName} ${session.professional.user.lastName}`,
         metadata: {
           sessionId: session._id.toString(),
           userId: userId,

@@ -105,9 +105,9 @@ const SessionDetail = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Session Details</h1>
           <p className="text-gray-600">
-            {getUserType() === 'professional' 
+            {getUserType() === 'professional'
               ? `With ${session.user.firstName} ${session.user.lastName}`
-              : `With ${session.professional.anonymizedProfile.displayName}`}
+              : `With ${session.professional.user.firstName} ${session.professional.user.lastName}`}
           </p>
         </div>
         
@@ -292,13 +292,13 @@ const SessionDetail = () => {
             ) : (
               <div>
                 <p className="font-medium mb-1">
-                  {session.professional.anonymizedProfile.displayName}
+                  {session.professional.user.firstName} {session.professional.user.lastName}
                 </p>
                 <p className="text-gray-600 text-sm mb-1">
-                  {session.professional.anonymizedProfile.anonymizedTitle}
+                  {session.professional.title}
                 </p>
                 <p className="text-gray-600 text-sm mb-4">
-                  {session.professional.anonymizedProfile.anonymizedCompany}
+                  {session.professional.company?.name || session.professional.companyName}
                 </p>
               </div>
             )}

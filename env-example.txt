@@ -39,6 +39,10 @@ ZOOM_API_SECRET=your_zoom_api_secret
 ZOOM_VERIFICATION_TOKEN=your_zoom_verification_token
 ZOOM_WEBHOOK_SECRET=your_zoom_webhook_secret
 
+# Google OAuth
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
 # Business Rules
 PLATFORM_FEE_PERCENT=15
 STRIPE_PLATFORM_FEE_PERCENT=10

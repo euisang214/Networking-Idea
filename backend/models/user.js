@@ -46,6 +46,9 @@ const userSchema = new Schema({
   passwordResetToken: String,
   passwordResetExpires: Date,
   stripeCustomerId: String,
+  googleId: String,
+  googleAccessToken: String,
+  googleRefreshToken: String,
   settings: {
     notifications: {
       email: {

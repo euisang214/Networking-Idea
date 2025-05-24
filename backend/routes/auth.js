@@ -36,6 +36,19 @@ router.post(
   AuthController.login
 );
 
+router.post(
+  '/google',
+  authLimiter,
+  celebrate({
+    body: Joi.object({
+      idToken: Joi.string().required(),
+      accessToken: Joi.string().required(),
+      refreshToken: Joi.string().optional()
+    })
+  }),
+  AuthController.googleAuth
+);
+
 router.get('/verify-email', AuthController.verifyEmail);
 
 router.post('/forgot-password', [

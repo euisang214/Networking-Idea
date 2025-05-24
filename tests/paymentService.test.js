@@ -5,7 +5,6 @@ const mockSession = {
   professional: {
     _id: 'pro1',
     stripeConnectedAccountId: 'acct_1',
-    anonymizedProfile: { displayName: 'Pro One' },
     user: 'proUser1',
     statistics: { completedSessions: 0, totalEarnings: 0 }
   },

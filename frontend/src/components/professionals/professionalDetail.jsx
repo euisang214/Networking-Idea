@@ -80,10 +80,10 @@ const ProfessionalDetail = () => {
             <div className="flex flex-col md:flex-row md:justify-between md:items-start">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  {professional.anonymizedProfile.displayName}
+                  {professional.user.firstName} {professional.user.lastName}
                 </h1>
                 <p className="text-gray-600 mt-1">
-                  {professional.anonymizedProfile.anonymizedTitle} at {professional.anonymizedProfile.anonymizedCompany}
+                  {professional.title} at {professional.company?.name || professional.companyName}
                 </p>
                 
                 <div className="flex items-center mt-2">
@@ -121,7 +121,7 @@ const ProfessionalDetail = () => {
             <div className="mt-6">
               <h2 className="text-lg font-medium text-gray-900 mb-2">About</h2>
               <p className="text-gray-600 whitespace-pre-line">
-                {professional.anonymizedProfile.anonymizedBio}
+                {professional.bio}
               </p>
             </div>
             

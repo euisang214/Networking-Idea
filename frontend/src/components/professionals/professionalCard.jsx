@@ -18,10 +18,10 @@ const ProfessionalCard = ({ professional }) => {
         <div className="flex justify-between">
           <div>
             <h3 className="text-lg font-medium text-gray-900 mb-1">
-              {professional.anonymizedProfile.displayName}
+              {professional.user.firstName} {professional.user.lastName}
             </h3>
             <p className="text-sm text-gray-500 mb-2">
-              {professional.anonymizedProfile.anonymizedTitle} at {professional.anonymizedProfile.anonymizedCompany}
+              {professional.title} at {professional.company?.name || professional.companyName}
             </p>
           </div>
           
@@ -46,7 +46,7 @@ const ProfessionalCard = ({ professional }) => {
         
         <div className="my-3">
           <p className="text-sm text-gray-600 line-clamp-3">
-            {professional.anonymizedProfile.anonymizedBio}
+            {professional.bio}
           </p>
         </div>
         
@@ -84,12 +84,16 @@ const ProfessionalCard = ({ professional }) => {
 ProfessionalCard.propTypes = {
   professional: PropTypes.shape({
     _id: PropTypes.string.isRequired,
-    anonymizedProfile: PropTypes.shape({
-      displayName: PropTypes.string.isRequired,
-      anonymizedTitle: PropTypes.string.isRequired,
-      anonymizedCompany: PropTypes.string.isRequired,
-      anonymizedBio: PropTypes.string
+    user: PropTypes.shape({
+      firstName: PropTypes.string.isRequired,
+      lastName: PropTypes.string.isRequired
     }).isRequired,
+    title: PropTypes.string.isRequired,
+    company: PropTypes.shape({
+      name: PropTypes.string
+    }),
+    companyName: PropTypes.string,
+    bio: PropTypes.string,
     hourlyRate: PropTypes.number.isRequired,
     yearsOfExperience: PropTypes.number.isRequired,
     skills: PropTypes.arrayOf(PropTypes.string),

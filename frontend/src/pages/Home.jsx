@@ -13,7 +13,7 @@ const Home = () => {
               Connect with Industry Professionals
             </h1>
             <p className="mt-6 text-xl leading-8">
-              Book confidential, one-on-one virtual networking sessions with anonymized professionals from top companies.
+              Book confidential, one-on-one virtual networking sessions with professionals from top companies.
             </p>
             <div className="mt-10 flex justify-center gap-4">
               <Link to="/professionals">
@@ -53,7 +53,7 @@ const Home = () => {
                 </div>
                 <h3 className="text-lg font-medium text-gray-900">1. Find Professionals</h3>
                 <p className="mt-2 text-base text-gray-500">
-                  Browse anonymized profiles of professionals from various industries and companies.
+                  Browse profiles of professionals from various industries and companies.
                 </p>
               </div>
               

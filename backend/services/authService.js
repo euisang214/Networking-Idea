@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const EmailService = require('./emailService');
 const logger = require('../utils/logger');
+const GoogleService = require('./googleService');
 
 class AuthService {
   // Register a new user
@@ -104,6 +105,54 @@ class AuthService {
     } catch (error) {
       logger.error(`Login failed: ${error.message}`);
       throw new Error(`Login failed: ${error.message}`);
+    }
+  }
+
+  // Login or register with Google
+  async googleLogin(idToken, accessToken, refreshToken) {
+    try {
+      const profile = await GoogleService.verifyIdToken(idToken);
+      const email = profile.email.toLowerCase();
+      const googleId = profile.sub;
+
+      let user = await User.findOne({ googleId });
+      if (!user) {
+        user = await User.findOne({ email });
+      }
+
+      if (!user) {
+        // Create new user registered via Google
+        user = new User({
+          email,
+          password: crypto.randomBytes(20).toString('hex'),
+          firstName: profile.given_name || 'First',
+          lastName: profile.family_name || 'Last',
+          userType: 'candidate',
+          emailVerified: true
+        });
+      }
+
+      user.googleId = googleId;
+      user.googleAccessToken = accessToken;
+      if (refreshToken) user.googleRefreshToken = refreshToken;
+      user.lastLogin = new Date();
+      await user.save();
+
+      const token = this.generateToken(user);
+      return {
+        token,
+        user: {
+          _id: user._id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          userType: user.userType,
+          emailVerified: user.emailVerified
+        }
+      };
+    } catch (error) {
+      logger.error(`Google login failed: ${error.message}`);
+      throw new Error(`Google login failed: ${error.message}`);
     }
   }
 
