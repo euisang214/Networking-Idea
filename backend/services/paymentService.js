@@ -13,6 +13,100 @@ class PaymentService {
     this.platformFeePercent = parseFloat(process.env.PLATFORM_FEE_PERCENT || 15);
   }
 
+  // Add this method to PaymentService:
+  async processReferralPayment (referralId) {
+    const Referral = require('../models/referral');
+    const ProfessionalProfile = require('../models/professionalProfile');
+    const Payment = require('../models/payment');
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    
+    // Get referral
+    const referral = await Referral.findById(referralId)
+      .populate('professional')
+      .populate('candidate');
+      
+    if (!referral) {
+      throw new Error('Referral not found');
+    }
+    
+    if (referral.status !== 'verified') {
+      throw new Error('Referral not verified');
+    }
+    
+    // Calculate amounts
+    const baseReward = parseFloat(process.env.REFERRAL_REWARD_AMOUNT) || 50;
+    const platformFeePercent = parseFloat(process.env.REFERRAL_PLATFORM_FEE_PERCENT) || 15; // New env var
+    const platformFee = baseReward * (platformFeePercent / 100);
+    const professionalAmount = baseReward - platformFee;
+    
+    // Check if professional has Stripe connected account
+    if (!referral.professional.stripeConnectedAccountId) {
+      throw new Error('Professional does not have connected payment account');
+    }
+    
+    try {
+      // Create Stripe transfer to professional
+      const transfer = await stripe.transfers.create({
+        amount: Math.round(professionalAmount * 100), // Convert to cents
+        currency: 'usd',
+        destination: referral.professional.stripeConnectedAccountId,
+        description: `Referral reward for candidate: ${referral.candidate.email}`,
+        metadata: {
+          referralId: referral._id.toString(),
+          type: 'referral_payout'
+        }
+      });
+      
+      // Update referral status
+      referral.status = 'rewarded';
+      referral.rewardAmount = professionalAmount;
+      referral.paymentStatus = 'paid';
+      referral.paymentId = transfer.id;
+      referral.payoutDate = new Date();
+      await referral.save();
+      
+      // Create payment record
+      const payment = await Payment.create({
+        user: null, // System-initiated
+        recipient: referral.professional.user,
+        amount: professionalAmount,
+        currency: 'usd',
+        description: `Referral payout for ${referral.candidate.email}`,
+        type: 'referral',
+        status: 'completed',
+        stripeTransferId: transfer.id,
+        referral: referral._id,
+        platformFee: {
+          amount: platformFee,
+          percentage: platformFeePercent
+        },
+        completedAt: new Date()
+      });
+      
+      // Update professional statistics
+      await ProfessionalProfile.findByIdAndUpdate(referral.professional._id, {
+        $inc: {
+          'statistics.successfulReferrals': 1,
+          'statistics.totalEarnings': professionalAmount
+        }
+      });
+      
+      logger.info(`Referral payment processed: ${referral._id} - $${professionalAmount} (fee: $${platformFee})`);
+      
+      return {
+        referralId: referral._id,
+        transferId: transfer.id,
+        amount: professionalAmount,
+        platformFee: platformFee,
+        paymentId: payment._id
+      };
+      
+    } catch (stripeError) {
+      logger.error(`Stripe transfer failed for referral ${referralId}: ${stripeError.message}`);
+      throw new Error(`Payment processing failed: ${stripeError.message}`);
+    }
+  }
+
   // Process session payment from user
   async processSessionPayment(sessionId, paymentMethodId, userId) {
     try {
@@ -282,6 +376,8 @@ class PaymentService {
       throw new Error(`Failed to create checkout session: ${error.message}`);
     }
   }
+
+  
 
   // Create Stripe connected account for professional
   async createConnectedAccount(professionalId) {

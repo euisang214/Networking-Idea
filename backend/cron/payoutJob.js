@@ -21,12 +21,42 @@ const payoutJob = cron.schedule('0 2 * * *', async () => {
     await processWeeklyPayouts();
     await processMonthlyPayouts();
     await processDailyPayouts();
+    await processVerifiedReferrals();
     
     logger.info('Payout job completed successfully');
   } catch (error) {
     logger.error(`Error in payout job: ${error.message}`, { error });
   }
 });
+
+// Add this function to handle any missed referrals:
+async function processVerifiedReferrals() {
+  try {
+    const Referral = require('../models/referral');
+    const PaymentService = require('../services/paymentService');
+    
+    // Find verified referrals that haven't been paid yet
+    const pendingReferrals = await Referral.find({
+      status: 'verified',
+      emailDomainVerified: true,
+      paymentStatus: { $in: ['pending', null] }
+    });
+    
+    logger.info(`Processing ${pendingReferrals.length} pending referral payouts`);
+    
+    for (const referral of pendingReferrals) {
+      try {
+        await PaymentService.processReferralPayment(referral._id);
+        logger.info(`Processed referral payout: ${referral._id}`);
+      } catch (error) {
+        logger.error(`Failed to process referral ${referral._id}: ${error.message}`);
+      }
+    }
+  } catch (error) {
+    logger.error(`Error in referral processing: ${error.message}`);
+  }
+}
+
 
 /**
  * Process weekly payouts (runs on Mondays)

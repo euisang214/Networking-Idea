@@ -13,10 +13,99 @@ const eventSchema = require('../schemas/sendgridEventSchema.json');
 const ajv = new Ajv();
 const validateEvents = ajv.compile(eventSchema);
 
-// Handle email parsing for referral verification
+// Replace the handleReferralEmail function with this:
 const handleReferralEmail = async (emailData) => {
-  const result = await referralService.processReferralEmail(emailData);
-  return responseFormatter.success(res, result || { processed: false });
+  try {
+    logger.info('Processing referral email', { from: emailData.from, to: emailData.to });
+    
+    // Extract sender domain and recipient domain
+    const senderEmail = emailData.from;
+    const recipientEmail = emailData.to;
+    const ccEmails = emailData.cc ? emailData.cc.split(',').map(e => e.trim()) : [];
+    
+    // Check if platform email was CC'd
+    const platformEmail = process.env.PLATFORM_EMAIL || 'referrals@mentorconnect.com';
+    const platformCCd = ccEmails.includes(platformEmail);
+    
+    if (!platformCCd) {
+      logger.info('Platform not CC\'d on email, skipping referral processing');
+      return { processed: false, reason: 'Platform not CC\'d' };
+    }
+    
+    // Extract domains
+    const senderDomain = senderEmail.split('@')[1];
+    const recipientDomain = recipientEmail.split('@')[1];
+    
+    // Verify domains match (same company)
+    if (senderDomain !== recipientDomain) {
+      logger.info('Email domains do not match', { senderDomain, recipientDomain });
+      return { processed: false, reason: 'Domain mismatch' };
+    }
+    
+    // Find candidate mentioned in email body
+    const User = require('../models/user');
+    const candidate = await User.findCandidateInEmailContent(emailData.text || emailData.html);
+    
+    if (!candidate) {
+      logger.info('No candidate found in email content');
+      return { processed: false, reason: 'No candidate found' };
+    }
+    
+    // Find professional by sender email
+    const professional = await User.findOne({ 
+      email: senderEmail.toLowerCase(),
+      userType: 'professional'
+    }).populate('professionalProfile');
+    
+    if (!professional || !professional.professionalProfile) {
+      logger.info('Professional not found', { senderEmail });
+      return { processed: false, reason: 'Professional not found' };
+    }
+    
+    // Create referral record
+    const Referral = require('../models/referral');
+    const referral = new Referral({
+      professional: professional.professionalProfile._id,
+      candidate: candidate._id,
+      referralType: 'email',
+      status: 'verified', // Automatically verified!
+      emailDetails: {
+        senderEmail,
+        senderDomain,
+        recipientEmail,
+        recipientDomain,
+        referralEmailId: emailData.messageId,
+        ccEmails,
+        subject: emailData.subject,
+        timestamp: new Date()
+      },
+      emailDomainVerified: true,
+      verificationDetails: {
+        verifiedAt: new Date(),
+        verificationMethod: 'email-domain-auto',
+        verifiedBy: null // System verification
+      }
+    });
+    
+    await referral.save();
+    
+    // **AUTOMATIC PAYOUT PROCESSING**
+    const PaymentService = require('../services/paymentService');
+    const payoutResult = await PaymentService.processReferralPayment(referral._id);
+    
+    logger.info(`Referral automatically processed and paid: ${referral._id}`, payoutResult);
+    
+    return { 
+      processed: true, 
+      referralId: referral._id,
+      payoutAmount: payoutResult.amount,
+      platformFee: payoutResult.platformFee
+    };
+    
+  } catch (error) {
+    logger.error(`Error processing referral email: ${error.message}`);
+    throw error;
+  }
 };
 
 // SendGrid inbound email parse webhook
