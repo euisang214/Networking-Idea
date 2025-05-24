@@ -7,6 +7,33 @@ const logger = require("../utils/logger");
 
 // Controller for session-related operations
 const SessionController = {
+  // Candidate submits a session request and pays a deposit
+  requestSession: async (req, res, next) => {
+    try {
+      const { professionalId, availabilities, paymentMethodId, notes } = req.body;
+      const userId = req.user.id;
+
+      if (!professionalId || !Array.isArray(availabilities) || availabilities.length === 0) {
+        throw new ValidationError('Professional ID and availabilities are required');
+      }
+      if (!paymentMethodId) {
+        throw new ValidationError('Payment method ID is required');
+      }
+
+      const session = await SessionService.createSessionRequest({
+        professionalId,
+        userId,
+        availabilities,
+        notes,
+      });
+
+      await PaymentService.processSessionPayment(session._id, paymentMethodId, userId);
+
+      return responseFormatter.created(res, { session }, 'Session request submitted');
+    } catch (error) {
+      next(error);
+    }
+  },
   // Create a new session
   createSession: async (req, res, next) => {
     try {
@@ -231,6 +258,35 @@ const SessionController = {
         },
         "Session rescheduled successfully",
       );
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Professional confirms a time for a requested session
+  confirmSession: async (req, res, next) => {
+    try {
+      const { sessionId } = req.params;
+      const { startTime, endTime } = req.body;
+      const userId = req.user.id;
+
+      if (!startTime || !endTime) {
+        throw new ValidationError('Start time and end time are required');
+      }
+
+      const session = await SessionService.getSessionById(sessionId);
+
+      if (!session.professional.user || session.professional.user._id.toString() !== userId) {
+        throw new AuthorizationError('Not authorized to confirm this session');
+      }
+
+      const updatedSession = await SessionService.confirmSessionTime(
+        sessionId,
+        startTime,
+        endTime,
+      );
+
+      return responseFormatter.success(res, { session: updatedSession }, 'Session confirmed');
     } catch (error) {
       next(error);
     }

@@ -1,168 +1,110 @@
-const ReferralService = require('./referralService');
+const Referral = require('../models/referral');
+const ProfessionalProfile = require('../models/professionalProfile');
 const PaymentService = require('./paymentService');
 const NotificationService = require('./notificationService');
 const logger = require('../utils/logger');
 
-class referralService extends ReferralService {
-  
-  // Enhanced email processing with automatic payout
-  async processReferralEmail(emailData) {
-    try {
-      logger.info('Processing referral email for automatic verification');
-      
-      // Parse email data using existing method
-      const parsedEmail = EmailService.parseReferralEmail(emailData);
-      
-      if (!parsedEmail || !parsedEmail.isPlatformCCd) {
-        logger.info('Email not eligible for referral processing');
-        return { success: false, reason: 'Platform not CC\'d or invalid email' };
-      }
-      
-      // Create referral record
-      const referral = await this.createReferralFromEmail(parsedEmail);
-      
-      if (!referral) {
-        return { success: false, reason: 'Could not create referral' };
-      }
-      
-      // CRITICAL: Auto-verify if domains match
-      if (parsedEmail.domainsMatch) {
-        await this.verifyAndPayReferral(referral._id);
-        return {
-          success: true,
-          referralId: referral._id,
-          verified: true,
-          payoutProcessed: true
-        };
-      }
-      
-      return {
-        success: true,
-        referralId: referral._id,
-        verified: false,
-        reason: 'Domain mismatch - manual review required'
-      };
-      
-    } catch (error) {
-      logger.error(`Error processing referral email: ${error.message}`);
-      throw error;
-    }
+class ReferralService {
+  async createReferral(data) {
+    const referral = new Referral(data);
+    await referral.save();
+    return referral;
   }
-  
-  // New method: Verify referral and process payout in one step
-  async verifyAndPayReferral(referralId) {
-    try {
-      const referral = await this.getReferralById(referralId);
-      
-      if (!referral) {
-        throw new Error('Referral not found');
-      }
-      
-      // Verify email domains match
-      if (!this.validateEmailDomains(referral)) {
-        throw new Error('Email domains do not match');
-      }
-      
-      // Check business rules before payout
-      const canPayout = await this.checkPayoutEligibility(referral);
-      if (!canPayout.eligible) {
-        logger.info(`Referral ${referralId} not eligible for payout: ${canPayout.reason}`);
-        referral.status = 'verified'; // Verified but not paid
-        await referral.save();
-        return { verified: true, paid: false, reason: canPayout.reason };
-      }
-      
-      // Mark as verified
-      referral.status = 'verified';
-      referral.emailDomainVerified = true;
-      referral.verificationDetails = {
-        verifiedAt: new Date(),
-        verificationMethod: 'automatic-domain-match',
-        verifiedBy: null
-      };
-      await referral.save();
-      
-      // Process payout automatically
-      try {
-        const payoutResult = await PaymentService.processReferralPayment(referralId);
-        
-        // Send notifications
-        await NotificationService.sendNotification(referral.professional.user, 'referralRewarded', {
-          referralId: referral._id,
-          amount: payoutResult.amount,
-          candidateEmail: referral.candidate.email
-        });
-        
-        logger.info(`Referral ${referralId} verified and payout processed: $${payoutResult.amount}`);
-        
-        return {
-          verified: true,
-          paid: true,
-          amount: payoutResult.amount,
-          transferId: payoutResult.transferId
-        };
-        
-      } catch (payoutError) {
-        logger.error(`Payout failed for referral ${referralId}: ${payoutError.message}`);
-        return {
-          verified: true,
-          paid: false,
-          reason: 'Payout processing failed - will retry'
-        };
-      }
-      
-    } catch (error) {
-      logger.error(`Error in verifyAndPayReferral: ${error.message}`);
-      throw error;
-    }
+
+  async getReferralById(id) {
+    return Referral.findById(id);
   }
-  
-  // Check if referral is eligible for payout based on business rules
+
+  async getProfessionalReferrals(professionalId) {
+    return Referral.find({ professional: professionalId })
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
+  async getCandidateReferrals(userId) {
+    return Referral.find({ candidate: userId })
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
   async checkPayoutEligibility(referral) {
     const MAX_REWARD_PER_PRO = parseInt(process.env.MAX_REWARD_PER_PRO || '5', 10);
     const COOLDOWN_DAYS = parseInt(process.env.COOLDOWN_DAYS || '7', 10);
-    
-    // Check maximum rewards per professional
+
     if (MAX_REWARD_PER_PRO > 0) {
       const rewardedCount = await Referral.countDocuments({
         professional: referral.professional,
-        status: 'rewarded'
+        status: 'rewarded',
       });
-      
       if (rewardedCount >= MAX_REWARD_PER_PRO) {
         return { eligible: false, reason: 'Maximum referral limit reached' };
       }
     }
-    
-    // Check cooldown period
+
     if (COOLDOWN_DAYS > 0) {
       const lastReward = await Referral.findOne({
         professional: referral.professional,
-        status: 'rewarded'
+        status: 'rewarded',
       }).sort({ payoutDate: -1 });
-      
+
       if (lastReward && lastReward.payoutDate) {
-        const daysSinceLastReward = (Date.now() - lastReward.payoutDate.getTime()) / (1000 * 60 * 60 * 24);
-        if (daysSinceLastReward < COOLDOWN_DAYS) {
-          return { eligible: false, reason: `Cooldown period active (${COOLDOWN_DAYS - Math.floor(daysSinceLastReward)} days remaining)` };
+        const daysSince = (Date.now() - lastReward.payoutDate.getTime()) / (1000 * 60 * 60 * 24);
+        if (daysSince < COOLDOWN_DAYS) {
+          return {
+            eligible: false,
+            reason: `Cooldown period active (${COOLDOWN_DAYS - Math.floor(daysSince)} days remaining)`,
+          };
         }
       }
     }
-    
+
     return { eligible: true };
   }
-  
-  // Validate email domains match
-  validateEmailDomains(referral) {
-    if (!referral.emailDetails || 
-        !referral.emailDetails.senderDomain || 
-        !referral.emailDetails.recipientDomain) {
-      return false;
+
+  async verifyReferral(referralId) {
+    try {
+      const referral = await this.getReferralById(referralId);
+      if (!referral) {
+        throw new Error('Referral not found');
+      }
+
+      const eligibility = await this.checkPayoutEligibility(referral);
+      if (!eligibility.eligible) {
+        referral.status = 'rejected';
+        await referral.save();
+        return { status: 'rejected', reason: eligibility.reason };
+      }
+
+      referral.status = 'verified';
+      referral.emailDomainVerified = true;
+      referral.verificationDetails = {
+        verifiedAt: new Date(),
+        verificationMethod: 'manual',
+        verifiedBy: null,
+      };
+      await referral.save();
+
+      const payout = await PaymentService.processReferralPayment(referral._id);
+      referral.status = 'rewarded';
+      referral.paymentId = payout.transferId;
+      referral.paymentStatus = 'paid';
+      referral.payoutDate = new Date();
+      await referral.save();
+
+      if (referral.professional && referral.professional.user) {
+        await NotificationService.sendNotification(referral.professional.user, 'referralRewarded', {
+          referralId: referral._id,
+          amount: payout.amount,
+          candidateEmail: referral.candidate?.email,
+        });
+      }
+
+      return { status: 'rewarded', transferId: payout.transferId };
+    } catch (error) {
+      logger.error(`Failed to verify referral: ${error.message}`);
+      throw error;
     }
-    
-    return referral.emailDetails.senderDomain.toLowerCase() === 
-           referral.emailDetails.recipientDomain.toLowerCase();
   }
 }
 
-module.exports = new EnhancedReferralService();
+module.exports = new ReferralService();
