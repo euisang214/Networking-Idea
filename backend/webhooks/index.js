@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router();
 
 // Import webhook handlers
-const stripeWebhook = require('../webhooks/stripeWebhook');
-const zoomWebhook = require('../webhooks/zoomWebhook');
-const sendgridWebhook = require('../webhooks/sendgridWebhook');
+const stripeWebhook = require('./stripeWebhook');
+const zoomWebhook = require('./zoomWebhook');
+const sendgridWebhook = require('./sendgridWebhook');
 const { webhookLimiter } = require('../middlewares/rateLimiter');
 
 // Register webhook routes

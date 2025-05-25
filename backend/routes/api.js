@@ -10,7 +10,8 @@ const messageRoutes = require('./messages');
 const notificationRoutes = require('./notifications');
 const referralRoutes = require('./referrals');
 const paymentRoutes = require('./payments');
-const webhookRoutes = require('./webhooks');
+// Webhook routes are consolidated in the webhooks directory
+const webhookRoutes = require('../webhooks');
 const adminRoutes = require('./admin');
 const config = require('../config');
 
