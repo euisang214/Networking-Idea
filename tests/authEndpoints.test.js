@@ -1,4 +1,4 @@
-const { describe, it, before, after, expect, vi } = require('./test-helpers');
+const { describe, it, before, after, expect, vi, jest, render, screen } = require('./test-helpers');
 const path = require('path');
 
 process.env.JWT_SECRET = 'testsecret';

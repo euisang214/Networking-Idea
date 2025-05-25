@@ -1,6 +1,8 @@
 const { describe, it, before, beforeEach } = require('node:test');
 const assert = require('assert/strict');
 const Module = require('module');
+const { jest } = require('@jest/globals');
+const { render, screen } = require('@testing-library/react');
 
 const beforeAll = before;
 
@@ -95,4 +97,14 @@ Module._load = function(request, parent, isMain) {
   return originalLoad(request, parent, isMain);
 };
 
-module.exports = { describe, it, expect, vi, beforeEach, beforeAll };
+module.exports = {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  beforeAll,
+  jest,
+  render,
+  screen
+};
