@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useForm } from '../../hooks/useForm';
+import { useForm } from '../../hooks';
 import AuthAPI from '../../api/auth';
 import Input from '../../common/Input';
 import FileInput from '../../common/FileInput';

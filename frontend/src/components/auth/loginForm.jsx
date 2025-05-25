@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
-import { useForm } from '../../hooks/useForm';
+import { useAuth, useForm } from '../../hooks';
 import Input from '../../common/Input';
 import Button from '../../common/Button';
 

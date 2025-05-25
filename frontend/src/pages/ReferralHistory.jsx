@@ -1,7 +1,7 @@
 import React from 'react';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../hooks';
 import { Navigate } from 'react-router-dom';
-import ReferralHistory from '../components/referrals/referralHistory';
+import { ReferralHistory } from '../components/referrals';
 
 const ReferralHistoryPage = () => {
   const { user } = useAuth();

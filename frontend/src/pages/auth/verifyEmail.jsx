@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { CheckCircleIcon, XCircleIcon, MailIcon } from '@heroicons/react/outline';
 import { Button, Card, Spinner } from '../../components/common';
-import useAuth from '../../hooks/useAuth';
+import { useAuth } from '../../hooks';
 import AuthAPI from '../../api/auth';
 
 const VerifyEmail = () => {

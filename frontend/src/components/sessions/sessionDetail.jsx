@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../hooks";
 import SessionsAPI from "../../api/sessions";
 import Card from "../common/Card";
 import Button from "../common/Button";

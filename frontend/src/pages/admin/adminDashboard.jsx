@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../hooks';
 import { Navigate } from 'react-router-dom';
 import AdminAPI from '../../api/admin';
 import Card from '../../components/common/Card';

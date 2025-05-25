@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../hooks';
 import { useNavigate } from 'react-router-dom';
 import Button from '../common/Button';
 
