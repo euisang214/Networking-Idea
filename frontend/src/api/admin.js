@@ -1,5 +1,5 @@
 // frontend/src/api/admin.js
-import api from './index';
+import api from '../services/api/client';
 
 const AdminAPI = {
   // Dashboard Stats
