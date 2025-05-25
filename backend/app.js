@@ -2,7 +2,6 @@ const express = require('express');
 const path = require('path');
 const http = require('http');
 const socketIo = require('socket.io');
-const connectDatabase = require('./config/database');
 const configurePassport = require('./config/passport');
 const configureMiddleware = require('./config/middleware');
 const apiRoutes = require('./routes/api');
