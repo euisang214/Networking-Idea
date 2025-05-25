@@ -4,7 +4,8 @@ const fs = require('fs');
 const path = require('path');
 const handlebars = require('handlebars');
 const logger = require('../utils/logger');
-if (process.env.MOCK_INTEGRATIONS === "true") {
+const config = require('../config');
+if (config.app.mockIntegrations) {
   module.exports = require("./mocks/emailService");
   return;
 }
@@ -12,23 +13,23 @@ if (process.env.MOCK_INTEGRATIONS === "true") {
 
 class EmailService {
   constructor() {
-    this.from = process.env.EMAIL_FROM || 'noreply@mentorconnect.com';
-    this.platformEmail = process.env.PLATFORM_EMAIL || 'referrals@mentorconnect.com';
+    this.from = config.email.from;
+    this.platformEmail = config.email.platformEmail;
     
     // Set up SendGrid if API key is available
-    if (process.env.SENDGRID_API_KEY) {
-      sendgrid.setApiKey(process.env.SENDGRID_API_KEY);
+    if (config.email.sendgridApiKey) {
+      sendgrid.setApiKey(config.email.sendgridApiKey);
       this.useSendGrid = true;
     } else {
       // Fallback to standard SMTP
       this.useSendGrid = false;
       this.transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: process.env.SMTP_PORT,
-        secure: process.env.SMTP_SECURE === 'true',
+        host: config.email.smtp.host,
+        port: config.email.smtp.port,
+        secure: config.email.smtp.secure,
         auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASSWORD
+          user: config.email.smtp.user,
+          pass: config.email.smtp.pass
         }
       });
     }

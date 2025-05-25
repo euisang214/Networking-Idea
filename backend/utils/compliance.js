@@ -8,6 +8,7 @@ const Message = require('../models/message');
 const Referral = require('../models/referral');
 const Payment = require('../models/payment');
 const logger = require('./logger');
+const config = require('../config');
 
 async function gdprDeleteUser(userId) {
   await Message.deleteMany({ $or: [{ sender: userId }, { recipient: userId }] });
@@ -19,7 +20,7 @@ async function gdprDeleteUser(userId) {
 }
 
 async function archiveLogs() {
-  const bucket = process.env.LOG_ARCHIVE_BUCKET;
+  const bucket = config.logging.logArchiveBucket;
   if (!bucket) return;
   const dir = path.join(__dirname, '../logs');
   if (!fs.existsSync(dir)) return;

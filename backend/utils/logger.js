@@ -2,6 +2,7 @@ const winston = require('winston');
 const path = require('path');
 const fs = require('fs');
 const { inc } = require('./metrics');
+const config = require('../config');
 
 class LokiTransport {
   constructor(opts = {}) {
@@ -54,7 +55,7 @@ const logFormat = winston.format.printf(({ level, message, timestamp, ...meta })
 
 // Create the logger
 const logger = winston.createLogger({
-  level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+  level: config.app.env === 'production' ? 'info' : 'debug',
   format: winston.format.combine(
     winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
     winston.format.errors({ stack: true }),
@@ -83,7 +84,7 @@ const logger = winston.createLogger({
       maxsize: 5242880, // 5MB
       maxFiles: 5
     }),
-    ...(process.env.LOKI_URL ? [new LokiTransport({ endpoint: process.env.LOKI_URL })] : [])
+    ...(config.logging.lokiUrl ? [new LokiTransport({ endpoint: config.logging.lokiUrl })] : [])
   ],
   exceptionHandlers: [
     new winston.transports.File({ 

@@ -2,6 +2,7 @@ const passport = require('passport');
 const { Strategy: JwtStrategy, ExtractJwt } = require('passport-jwt');
 const User = require('../models/user');
 const logger = require('../utils/logger');
+const config = require('.');
 
 /**
  * Configure passport for JWT authentication
@@ -9,7 +10,7 @@ const logger = require('../utils/logger');
 const configurePassport = () => {
   const options = {
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-    secretOrKey: process.env.JWT_SECRET,
+    secretOrKey: config.auth.jwtSecret,
   };
   
   passport.use(

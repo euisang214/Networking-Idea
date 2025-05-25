@@ -5,6 +5,7 @@ const ProfessionalProfile = require('../models/professionalProfile');
 const Payment = require('../models/payment');
 const PaymentService = require('./paymentService');
 const ReferralService = require('./referralService');
+const config = require('../config');
 
 const AdminService = {
   // Dashboard Statistics
@@ -351,11 +352,11 @@ const AdminService = {
   getSettings: async () => {
     // This would typically come from a settings collection or config
     return {
-      platformFeePercent: process.env.PLATFORM_FEE_PERCENT || 15,
-      referralRewardAmount: process.env.REFERRAL_REWARD_AMOUNT || 50,
-      maxRewardPerPro: process.env.MAX_REWARD_PER_PRO || 5,
-      cooldownDays: process.env.COOLDOWN_DAYS || 7,
-      minPayoutAmount: process.env.MIN_PAYOUT_AMOUNT || 1
+      platformFeePercent: config.business.platformFeePercent,
+      referralRewardAmount: config.business.referralRewardAmount,
+      maxRewardPerPro: config.business.maxRewardPerPro,
+      cooldownDays: config.business.cooldownDays,
+      minPayoutAmount: config.business.minPayoutAmount
     };
   },
 

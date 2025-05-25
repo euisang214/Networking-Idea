@@ -9,6 +9,7 @@ const { swaggerSpec, swaggerUi } = require('./swagger');
 // so it is imported in app.js instead of here.
 // const errorHandler = require('../middlewares/errorHandler');
 const logger = require('../utils/logger');
+const config = require('.');
 
 /**
  * Configure Express middleware
@@ -36,7 +37,7 @@ const configureMiddleware = (app) => {
   app.use('/api/', apiLimiter);
   
   // Logging middleware
-  if (process.env.NODE_ENV === 'development') {
+  if (config.app.env === 'development') {
     app.use(morgan('dev'));
   } else {
     app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));

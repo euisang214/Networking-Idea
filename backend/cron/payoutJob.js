@@ -1,5 +1,6 @@
 const cron = require('node-cron');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const config = require('../config');
+const stripe = require('stripe')(config.stripe.secretKey);
 const ProfessionalProfile = require('../models/professionalProfile');
 const Session = require('../models/session');
 const Referral = require('../models/referral');
@@ -163,20 +164,20 @@ async function processPayout(professional) {
     // Calculate total payout amount
     const sessionAmount = completedSessions.reduce((sum, session) => {
       // Apply platform fee (e.g., 15%)
-      const platformFeePercent = process.env.PLATFORM_FEE_PERCENT || 15;
+      const platformFeePercent = config.business.platformFeePercent;
       const platformFee = session.price * (platformFeePercent / 100);
       const professionalAmount = session.price - platformFee;
       return sum + professionalAmount;
     }, 0);
     
     const referralAmount = verifiedReferrals.reduce((sum, referral) => {
-      return sum + (process.env.REFERRAL_REWARD_AMOUNT || 50);
+      return sum + config.business.referralRewardAmount;
     }, 0);
     
     const totalAmount = sessionAmount + referralAmount;
     
     // Skip if amount is below threshold (default $1)
-    const minPayout = process.env.MIN_PAYOUT_AMOUNT || 1;
+    const minPayout = config.business.minPayoutAmount;
     if (totalAmount < minPayout) {
       logger.info(`Skipping payout for professional ${professional._id} - amount ${totalAmount} below minimum ${minPayout}`);
       return;
@@ -201,7 +202,7 @@ async function processPayout(professional) {
       await Payment.create({
         user: null, // System-initiated payout
         recipient: professional.user._id,
-        amount: session.price * (1 - (process.env.PLATFORM_FEE_PERCENT || 15) / 100),
+        amount: session.price * (1 - (config.business.platformFeePercent) / 100),
         currency: 'usd',
         description: `Payout for session ${session._id}`,
         type: 'payout',
@@ -209,8 +210,8 @@ async function processPayout(professional) {
         stripeTransferId: payout.id,
         session: session._id,
         platformFee: {
-          amount: session.price * ((process.env.PLATFORM_FEE_PERCENT || 15) / 100),
-          percentage: process.env.PLATFORM_FEE_PERCENT || 15
+          amount: session.price * ((config.business.platformFeePercent) / 100),
+          percentage: config.business.platformFeePercent
         },
         completedAt: new Date()
       });
@@ -221,7 +222,7 @@ async function processPayout(professional) {
       referral.status = 'rewarded';
       referral.paymentStatus = 'paid';
       referral.paymentId = payout.id;
-      referral.rewardAmount = process.env.REFERRAL_REWARD_AMOUNT || 50;
+      referral.rewardAmount = config.business.referralRewardAmount;
       referral.payoutDate = new Date();
       await referral.save();
       
@@ -229,7 +230,7 @@ async function processPayout(professional) {
       await Payment.create({
         user: null, // System-initiated payout
         recipient: professional.user._id,
-        amount: process.env.REFERRAL_REWARD_AMOUNT || 50,
+        amount: config.business.referralRewardAmount,
         currency: 'usd',
         description: `Payout for referral ${referral._id}`,
         type: 'payout',

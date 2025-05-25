@@ -3,6 +3,7 @@ const ProfessionalProfile = require('../models/professionalProfile');
 const PaymentService = require('./paymentService');
 const NotificationService = require('./notificationService');
 const logger = require('../utils/logger');
+const config = require('../config');
 
 class ReferralService {
   async createReferral(data) {
@@ -28,8 +29,8 @@ class ReferralService {
   }
 
   async checkPayoutEligibility(referral) {
-    const MAX_REWARD_PER_PRO = parseInt(process.env.MAX_REWARD_PER_PRO || '5', 10);
-    const COOLDOWN_DAYS = parseInt(process.env.COOLDOWN_DAYS || '7', 10);
+    const MAX_REWARD_PER_PRO = parseInt(config.business.maxRewardPerPro, 10);
+    const COOLDOWN_DAYS = parseInt(config.business.cooldownDays, 10);
 
     if (MAX_REWARD_PER_PRO > 0) {
       const rewardedCount = await Referral.countDocuments({

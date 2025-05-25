@@ -2,18 +2,19 @@ const axios = require("axios");
 const crypto = require("crypto");
 const { v4: uuidv4 } = require("uuid");
 const logger = require("../utils/logger");
-if (process.env.MOCK_INTEGRATIONS === "true") {
+const config = require("../config");
+if (config.app.mockIntegrations) {
   module.exports = require("./mocks/zoomService");
   return;
 }
 
 class ZoomService {
   constructor() {
-    this.apiKey = process.env.ZOOM_API_KEY;
-    this.apiSecret = process.env.ZOOM_API_SECRET;
-    this.verificationToken = process.env.ZOOM_VERIFICATION_TOKEN;
+    this.apiKey = config.zoom.apiKey;
+    this.apiSecret = config.zoom.apiSecret;
+    this.verificationToken = config.zoom.verificationToken;
     this.baseUrl = "https://api.zoom.us/v2";
-    this.webhookSecret = process.env.ZOOM_WEBHOOK_SECRET;
+    this.webhookSecret = config.zoom.webhookSecret;
   }
 
   // Get JWT token for API access

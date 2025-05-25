@@ -1,5 +1,6 @@
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const config = require('.');
 
 // Swagger definition
 const swaggerDefinition = {
@@ -19,7 +20,7 @@ const swaggerDefinition = {
   },
   servers: [
     {
-      url: process.env.API_URL || 'http://localhost:5000/api',
+      url: config.app.apiUrl || 'http://localhost:5000/api',
       description: 'Development API Server',
     },
     {

@@ -1,4 +1,5 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const config = require('../config');
+const stripe = require('stripe')(config.stripe.secretKey);
 const logger = require('../utils/logger');
 const Session = require('../models/session');
 const User = require('../models/user');
@@ -9,8 +10,8 @@ const EmailService = require('./emailService');
 
 class PaymentService {
   constructor() {
-    this.referralRewardAmount = parseInt(process.env.REFERRAL_REWARD_AMOUNT || 50, 10);
-    this.platformFeePercent = parseFloat(process.env.PLATFORM_FEE_PERCENT || 15);
+    this.referralRewardAmount = config.business.referralRewardAmount;
+    this.platformFeePercent = config.business.platformFeePercent;
   }
 
   // Process session payment from user
@@ -248,9 +249,9 @@ class PaymentService {
       }
       
       const prices = {
-        basic: process.env.STRIPE_BASIC_PRICE_ID,
-        premium: process.env.STRIPE_PREMIUM_PRICE_ID,
-        enterprise: process.env.STRIPE_ENTERPRISE_PRICE_ID
+        basic: config.stripe.basicPriceId,
+        premium: config.stripe.premiumPriceId,
+        enterprise: config.stripe.enterprisePriceId
       };
       
       const priceId = prices[planType];
@@ -268,8 +269,8 @@ class PaymentService {
           }
         ],
         mode: 'subscription',
-        success_url: `${process.env.FRONTEND_URL}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.FRONTEND_URL}/subscription/cancel`
+        success_url: `${config.app.frontendUrl}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${config.app.frontendUrl}/subscription/cancel`
       });
       
       return {
@@ -322,8 +323,8 @@ class PaymentService {
       // Create onboarding link
       const accountLink = await stripe.accountLinks.create({
         account: account.id,
-        refresh_url: `${process.env.FRONTEND_URL}/professional/onboarding/refresh`,
-        return_url: `${process.env.FRONTEND_URL}/professional/onboarding/complete`,
+        refresh_url: `${config.app.frontendUrl}/professional/onboarding/refresh`,
+        return_url: `${config.app.frontendUrl}/professional/onboarding/complete`,
         type: 'account_onboarding'
       });
       

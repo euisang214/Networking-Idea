@@ -1,5 +1,6 @@
 const rateLimit = require('express-rate-limit');
 const { RateLimitError } = require('../utils/errorTypes');
+const config = require('../config');
 
 /**
  * Create rate limiter middleware
@@ -28,21 +29,21 @@ const parseEnvInt = (value, fallback) => {
 
 // General API rate limiter
 const apiLimiter = createRateLimiter(
-  parseEnvInt(process.env.API_RATE_LIMIT_MAX, 100),
-  parseEnvInt(process.env.API_RATE_LIMIT_WINDOW_MIN, 15)
+  parseEnvInt(config.rateLimit.api.max, 100),
+  parseEnvInt(config.rateLimit.api.windowMin, 15)
 );
 
 // Auth endpoints rate limiter (more strict)
 const authLimiter = createRateLimiter(
-  parseEnvInt(process.env.AUTH_RATE_LIMIT_MAX, 20),
-  parseEnvInt(process.env.AUTH_RATE_LIMIT_WINDOW_MIN, 15),
+  parseEnvInt(config.rateLimit.auth.max, 20),
+  parseEnvInt(config.rateLimit.auth.windowMin, 15),
   'Too many login attempts, please try again later'
 );
 
 // Webhook rate limiter (more permissive)
 const webhookLimiter = createRateLimiter(
-  parseEnvInt(process.env.WEBHOOK_RATE_LIMIT_MAX, 300),
-  parseEnvInt(process.env.WEBHOOK_RATE_LIMIT_WINDOW_MIN, 15)
+  parseEnvInt(config.rateLimit.webhook.max, 300),
+  parseEnvInt(config.rateLimit.webhook.windowMin, 15)
 );
 
 module.exports = {

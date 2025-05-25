@@ -12,6 +12,7 @@ const referralRoutes = require('./referrals');
 const paymentRoutes = require('./payments');
 const webhookRoutes = require('./webhooks');
 const adminRoutes = require('./admin');
+const config = require('../config');
 
 // Register API routes
 router.use('/auth', authRoutes);
@@ -30,7 +31,7 @@ router.get('/status', (req, res) => {
   res.json({
     status: 'online',
     timestamp: new Date(),
-    environment: process.env.NODE_ENV
+    environment: config.app.env
   });
 });
 

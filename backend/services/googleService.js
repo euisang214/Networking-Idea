@@ -1,6 +1,7 @@
 const axios = require('axios');
 const logger = require('../utils/logger');
-if (process.env.MOCK_INTEGRATIONS === "true") {
+const config = require('../config');
+if (config.app.mockIntegrations) {
   module.exports = require('./mocks/googleService');
   return;
 }
