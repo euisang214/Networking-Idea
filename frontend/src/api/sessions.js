@@ -1,4 +1,4 @@
-import api from "./index";
+import api from "../services/api/client";
 
 const SessionsAPI = {
   // Create a new session

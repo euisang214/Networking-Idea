@@ -1,4 +1,4 @@
-import api from './index';
+import api from '../services/api/client';
 
 const PaymentsAPI = {
   // Process session payment
