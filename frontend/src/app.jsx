@@ -5,9 +5,10 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import AppRoutes from './Routes';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
+import config from './config';
 
 // Initialize Stripe
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
+const stripePromise = loadStripe(config.stripePublicKey);
 
 const App = () => {
   return (
