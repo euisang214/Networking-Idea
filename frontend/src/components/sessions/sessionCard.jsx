@@ -72,7 +72,7 @@ const SessionCard = ({ session, userType, onStatusUpdate }) => {
     setError("");
 
     try {
-      await SessionsAPI.addFeedback(session._id, rating, comment);
+      await SessionsAPI.createFeedback(session._id, rating, comment);
       setShowFeedbackModal(false);
       if (onStatusUpdate) onStatusUpdate();
     } catch (err) {

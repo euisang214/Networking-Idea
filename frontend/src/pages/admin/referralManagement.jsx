@@ -32,7 +32,7 @@ const ReferralManagement = () => {
   const handleVerifyReferral = async (referralId) => {
     try {
       setActionLoading(prev => ({ ...prev, [referralId]: true }));
-      await AdminAPI.verifyReferral(referralId);
+      await AdminAPI.updateReferralVerification(referralId);
       
       setReferrals(referrals.map(referral => 
         referral._id === referralId 

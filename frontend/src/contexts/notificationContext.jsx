@@ -47,7 +47,7 @@ export const NotificationProvider = ({ children }) => {
   // Mark notification as read
   const markAsRead = async (notificationId) => {
     try {
-      await NotificationsAPI.markAsRead(notificationId);
+      await NotificationsAPI.updateReadStatus(notificationId);
       
       // Update local state
       setNotifications(notifications.map(notification => 
@@ -69,7 +69,7 @@ export const NotificationProvider = ({ children }) => {
   // Mark all notifications as read
   const markAllAsRead = async () => {
     try {
-      await NotificationsAPI.markAllAsRead();
+      await NotificationsAPI.updateAllReadStatus();
       
       // Update local state
       setNotifications(notifications.map(notification => ({

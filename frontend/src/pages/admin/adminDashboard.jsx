@@ -51,7 +51,7 @@ const AdminDashboard = () => {
   const handleReleasePayment = async (sessionId) => {
     try {
       setActionLoading(prev => ({ ...prev, [`payment_${sessionId}`]: true }));
-      await AdminAPI.releasePayment(sessionId);
+      await AdminAPI.createPaymentRelease(sessionId);
       
       // Update local state
       setSessions(sessions.map(session => 
@@ -76,7 +76,7 @@ const AdminDashboard = () => {
   const handleVerifyReferral = async (referralId) => {
     try {
       setActionLoading(prev => ({ ...prev, [`referral_${referralId}`]: true }));
-      await AdminAPI.verifyReferral(referralId);
+      await AdminAPI.updateReferralVerification(referralId);
       
       // Update local state
       setReferrals(referrals.map(referral => 

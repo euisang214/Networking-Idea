@@ -31,7 +31,7 @@ const SessionManagement = () => {
   const handleReleasePayment = async (sessionId) => {
     try {
       setActionLoading(prev => ({ ...prev, [sessionId]: true }));
-      await AdminAPI.releasePayment(sessionId);
+      await AdminAPI.createPaymentRelease(sessionId);
       
       setSessions(sessions.map(session => 
         session._id === sessionId 

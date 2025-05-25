@@ -35,14 +35,14 @@ export const AuthProvider = ({ children }) => {
   
   // Login user
   const login = async (email, password) => {
-    const response = await AuthAPI.login(email, password);
-    setUser(response.data.user);
-    return response;
+    const data = await AuthAPI.createSession({ email, password });
+    setUser(data.user);
+    return data;
   };
   
   // Logout user
   const logout = () => {
-    AuthAPI.logout();
+    AuthAPI.deleteSession();
     setUser(null);
   };
   

@@ -4,9 +4,10 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { CheckCircleIcon, XCircleIcon, MailIcon } from '@heroicons/react/outline';
 import { Button, Card, Spinner } from '../../components/common';
 import useAuth from '../../hooks/useAuth';
+import AuthAPI from '../../api/auth';
 
 const VerifyEmail = () => {
-  const { verifyEmail, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(true);
@@ -28,7 +29,7 @@ const VerifyEmail = () => {
       }
       
       try {
-        const result = await verifyEmail(token);
+        const result = await AuthAPI.updateEmailVerification(token);
         
         if (result.success) {
           setVerificationStatus('success');
@@ -46,7 +47,7 @@ const VerifyEmail = () => {
     };
     
     verify();
-  }, [token, verifyEmail]);
+  }, [token]);
   
   // Render different content based on verification status
   const renderContent = () => {

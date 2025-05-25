@@ -1,8 +1,15 @@
 import api from '../services/api/client';
+import { handleRequest } from '../services/api/helpers';
 
 const ProfessionalsAPI = {
-  // Search for professionals with filters
-  searchProfessionals: async (filters = {}, page = 1, limit = 10) => {
+  /**
+   * Search for professionals with filters
+   * @param {Object} filters - Search filters
+   * @param {number} page - Page number
+   * @param {number} limit - Results per page
+   * @returns {Promise<Object>} Paginated professionals
+   */
+  getProfessionals: (filters = {}, page = 1, limit = 10) => {
     const queryParams = new URLSearchParams();
     
     // Add filters to query params
@@ -15,45 +22,53 @@ const ProfessionalsAPI = {
     queryParams.append('page', page);
     queryParams.append('limit', limit);
     
-    const response = await api.get(`/professionals/search?${queryParams.toString()}`);
-    return response.data;
+    return handleRequest(
+      api.get(`/professionals/search?${queryParams.toString()}`)
+    );
   },
   
-  // Get all industries
-  getIndustries: async () => {
-    const response = await api.get('/professionals/industries');
-    return response.data.data.industries;
-  },
+  /**
+   * Retrieve list of industries
+   * @returns {Promise<Array>} Industry array
+   */
+  getIndustries: () => handleRequest(api.get('/professionals/industries')),
   
-  // Get professional profile by ID
-  getProfile: async (profileId) => {
-    const response = await api.get(`/professionals/${profileId}`);
-    return response.data.data.profile;
-  },
+  /**
+   * Get a professional profile by id
+   * @param {string} profileId - Profile identifier
+   * @returns {Promise<Object>} Profile data
+   */
+  getProfile: (profileId) => handleRequest(api.get(`/professionals/${profileId}`)),
   
-  // Get own professional profile
-  getOwnProfile: async () => {
-    const response = await api.get('/professionals/me/profile');
-    return response.data.data.profile;
-  },
+  /**
+   * Get the authenticated professional profile
+   * @returns {Promise<Object>} Profile data
+   */
+  getOwnProfile: () => handleRequest(api.get('/professionals/me/profile')),
   
-  // Create professional profile
-  createProfile: async (profileData) => {
-    const response = await api.post('/professionals', profileData);
-    return response.data.data.profile;
-  },
+  /**
+   * Create a professional profile
+   * @param {Object} profileData - Profile details
+   * @returns {Promise<Object>} Created profile
+   */
+  createProfile: (profileData) =>
+    handleRequest(api.post('/professionals', profileData)),
   
-  // Update professional profile
-  updateProfile: async (profileId, updateData) => {
-    const response = await api.put(`/professionals/${profileId}`, updateData);
-    return response.data.data.profile;
-  },
+  /**
+   * Update a professional profile
+   * @param {string} profileId - Profile identifier
+   * @param {Object} updateData - Updated fields
+   * @returns {Promise<Object>} Updated profile
+   */
+  updateProfile: (profileId, updateData) =>
+    handleRequest(api.put(`/professionals/${profileId}`, updateData)),
   
-  // Create Stripe connected account
-  createConnectedAccount: async () => {
-    const response = await api.post('/professionals/connect-account');
-    return response.data.data;
-  }
+  /**
+   * Create a Stripe connected account for payouts
+   * @returns {Promise<Object>} Stripe onboarding data
+   */
+  createConnectedAccount: () =>
+    handleRequest(api.post('/professionals/connect-account'))
 };
 
 export default ProfessionalsAPI;

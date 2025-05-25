@@ -14,7 +14,7 @@ const RescheduleModal = ({ isOpen, onClose, session, onRescheduled }) => {
     setLoading(true);
     setError("");
     try {
-      await SessionsAPI.rescheduleSession(
+      await SessionsAPI.updateSessionSchedule(
         session._id,
         new Date(start).toISOString(),
         new Date(end).toISOString(),

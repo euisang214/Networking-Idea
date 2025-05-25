@@ -6,9 +6,10 @@ import * as Yup from 'yup';
 import { LockClosedIcon } from '@heroicons/react/outline';
 import { Input, Button, Card } from '../../components/common';
 import useAuth from '../../hooks/useAuth';
+import AuthAPI from '../../api/auth';
 
 const ResetPassword = () => {
-  const { resetPassword, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
@@ -59,7 +60,7 @@ const ResetPassword = () => {
       setError('');
       
       try {
-        const result = await resetPassword(token, values.password);
+        const result = await AuthAPI.updatePasswordWithToken(token, values.password);
         
         if (result.success) {
           setIsSubmitted(true);

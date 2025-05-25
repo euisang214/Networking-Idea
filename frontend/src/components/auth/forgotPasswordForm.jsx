@@ -38,7 +38,7 @@ const ForgotPasswordForm = () => {
     setIsLoading(true);
     
     try {
-      await AuthAPI.requestPasswordReset(values.email);
+      await AuthAPI.createPasswordResetRequest(values.email);
       setResetRequested(true);
     } catch (err) {
       // In case of error, we don't want to expose whether the email exists or not for security

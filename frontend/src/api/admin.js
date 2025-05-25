@@ -1,166 +1,201 @@
 // frontend/src/api/admin.js
 import api from '../services/api/client';
+import { handleRequest } from '../services/api/helpers';
 
 const AdminAPI = {
-  // Dashboard Stats
-  getStats: async () => {
-    const response = await api.get('/admin/stats');
-    return response.data.data;
-  },
+  /**
+   * Fetch overall dashboard statistics
+   * @returns {Promise<Object>} Stats data
+   */
+  getStats: () => handleRequest(api.get('/admin/stats')),
 
-  // Session Management
-  getSessions: async (status = null, page = 1, limit = 50) => {
+  /**
+   * Retrieve sessions with optional status filter
+   */
+  getSessions: (status = null, page = 1, limit = 50) => {
     const params = new URLSearchParams({ page, limit });
     if (status) params.append('status', status);
     
-    const response = await api.get(`/admin/sessions?${params}`);
-    return response.data.data.sessions;
+    return handleRequest(api.get(`/admin/sessions?${params}`));
   },
 
-  releasePayment: async (sessionId) => {
-    const response = await api.post(`/admin/sessions/${sessionId}/release-payment`);
-    return response.data.data;
-  },
+  /**
+   * Release payment for a session
+   * @param {string} sessionId - Session identifier
+   * @returns {Promise<Object>} Operation result
+   */
+  createPaymentRelease: (sessionId) =>
+    handleRequest(api.post(`/admin/sessions/${sessionId}/release-payment`)),
 
-  verifySession: async (sessionId) => {
-    const response = await api.post(`/admin/sessions/${sessionId}/verify`);
-    return response.data.data;
-  },
+  /**
+   * Verify a session
+   * @param {string} sessionId - Session identifier
+   * @returns {Promise<Object>} Operation result
+   */
+  updateSessionVerification: (sessionId) =>
+    handleRequest(api.post(`/admin/sessions/${sessionId}/verify`)),
 
-  // Referral Management
-  getReferrals: async (status = null, page = 1, limit = 50) => {
+  /**
+   * Referral Management
+   */
+  getReferrals: (status = null, page = 1, limit = 50) => {
     const params = new URLSearchParams({ page, limit });
     if (status) params.append('status', status);
     
-    const response = await api.get(`/admin/referrals?${params}`);
-    return response.data.data.referrals;
+    return handleRequest(api.get(`/admin/referrals?${params}`));
   },
 
-  verifyReferral: async (referralId) => {
-    const response = await api.post(`/admin/referrals/${referralId}/verify`);
-    return response.data.data;
-  },
+  /**
+   * Verify a referral
+   * @param {string} referralId - Referral identifier
+   * @returns {Promise<Object>} Operation result
+   */
+  updateReferralVerification: (referralId) =>
+    handleRequest(api.post(`/admin/referrals/${referralId}/verify`)),
 
-  processReferralPayout: async (referralId) => {
-    const response = await api.post(`/admin/referrals/${referralId}/payout`);
-    return response.data.data;
-  },
+  /**
+   * Process referral payout
+   * @param {string} referralId - Referral identifier
+   * @returns {Promise<Object>} Operation result
+   */
+  createReferralPayout: (referralId) =>
+    handleRequest(api.post(`/admin/referrals/${referralId}/payout`)),
 
-  // User Management
-  getUsers: async (filters = {}, page = 1, limit = 50) => {
+  /**
+   * User Management
+   */
+  getUsers: (filters = {}, page = 1, limit = 50) => {
     const params = new URLSearchParams({ page, limit });
     Object.entries(filters).forEach(([key, value]) => {
       if (value) params.append(key, value);
     });
     
-    const response = await api.get(`/admin/users?${params}`);
-    return response.data.data;
+    return handleRequest(api.get(`/admin/users?${params}`));
   },
 
-  getUserById: async (userId) => {
-    const response = await api.get(`/admin/users/${userId}`);
-    return response.data.data.user;
-  },
+  /**
+   * Fetch a user by id
+   * @param {string} userId - User identifier
+   * @returns {Promise<Object>} User data
+   */
+  getUserById: (userId) => handleRequest(api.get(`/admin/users/${userId}`)),
 
-  updateUserStatus: async (userId, status) => {
-    const response = await api.put(`/admin/users/${userId}/status`, { status });
-    return response.data.data;
-  },
+  /**
+   * Update user status
+   * @param {string} userId - User identifier
+   * @param {string} status - New status
+   * @returns {Promise<Object>} Operation result
+   */
+  updateUserStatus: (userId, status) =>
+    handleRequest(api.put(`/admin/users/${userId}/status`, { status })),
 
-  deleteUser: async (userId) => {
-    const response = await api.delete(`/admin/users/${userId}`);
-    return response.data.data;
-  },
+  /**
+   * Delete a user
+   * @param {string} userId - User identifier
+   * @returns {Promise<Object>} Operation result
+   */
+  deleteUser: (userId) =>
+    handleRequest(api.delete(`/admin/users/${userId}`)),
 
-  // Professional Management
-  getProfessionals: async (filters = {}, page = 1, limit = 50) => {
+  /**
+   * Professional Management
+   */
+  getProfessionals: (filters = {}, page = 1, limit = 50) => {
     const params = new URLSearchParams({ page, limit });
     Object.entries(filters).forEach(([key, value]) => {
       if (value) params.append(key, value);
     });
     
-    const response = await api.get(`/admin/professionals?${params}`);
-    return response.data.data;
+    return handleRequest(api.get(`/admin/professionals?${params}`));
   },
 
-  verifyProfessional: async (professionalId) => {
-    const response = await api.post(`/admin/professionals/${professionalId}/verify`);
-    return response.data.data;
-  },
+  /**
+   * Verify a professional profile
+   * @param {string} professionalId - Professional identifier
+   * @returns {Promise<Object>} Operation result
+   */
+  updateProfessionalVerification: (professionalId) =>
+    handleRequest(
+      api.post(`/admin/professionals/${professionalId}/verify`)
+    ),
 
-  suspendProfessional: async (professionalId, reason) => {
-    const response = await api.post(`/admin/professionals/${professionalId}/suspend`, { reason });
-    return response.data.data;
-  },
+  /**
+   * Suspend a professional
+   * @param {string} professionalId - Professional identifier
+   * @param {string} reason - Suspension reason
+   * @returns {Promise<Object>} Operation result
+   */
+  updateProfessionalSuspension: (professionalId, reason) =>
+    handleRequest(
+      api.post(`/admin/professionals/${professionalId}/suspend`, { reason })
+    ),
 
-  // Analytics & Reports
-  getAnalytics: async (timeRange = '30d') => {
-    const response = await api.get(`/admin/analytics?range=${timeRange}`);
-    return response.data.data;
-  },
+  /**
+   * Analytics & Reports
+   */
+  getAnalytics: (timeRange = '30d') =>
+    handleRequest(api.get(`/admin/analytics?range=${timeRange}`)),
 
-  getRevenueReport: async (startDate, endDate) => {
-    const response = await api.get(`/admin/reports/revenue?start=${startDate}&end=${endDate}`);
-    return response.data.data;
-  },
+  getRevenueReport: (startDate, endDate) =>
+    handleRequest(api.get(`/admin/reports/revenue?start=${startDate}&end=${endDate}`)),
 
-  getUserGrowthReport: async (timeRange = '90d') => {
-    const response = await api.get(`/admin/reports/user-growth?range=${timeRange}`);
-    return response.data.data;
-  },
+  getUserGrowthReport: (timeRange = '90d') =>
+    handleRequest(api.get(`/admin/reports/user-growth?range=${timeRange}`)),
 
-  // System Management
-  getSystemHealth: async () => {
-    const response = await api.get('/admin/system/health');
-    return response.data.data;
-  },
+  /**
+   * System Management
+   */
+  getSystemHealth: () => handleRequest(api.get('/admin/system/health')),
 
-  getAuditLogs: async (filters = {}, page = 1, limit = 50) => {
+  getAuditLogs: (filters = {}, page = 1, limit = 50) => {
     const params = new URLSearchParams({ page, limit });
     Object.entries(filters).forEach(([key, value]) => {
       if (value) params.append(key, value);
     });
     
-    const response = await api.get(`/admin/audit-logs?${params}`);
-    return response.data.data;
+    return handleRequest(api.get(`/admin/audit-logs?${params}`));
   },
 
-  // Settings Management
-  getSettings: async () => {
-    const response = await api.get('/admin/settings');
-    return response.data.data;
-  },
+  /**
+   * Settings Management
+   */
+  getSettings: () => handleRequest(api.get('/admin/settings')),
 
-  updateSettings: async (settings) => {
-    const response = await api.put('/admin/settings', settings);
-    return response.data.data;
-  },
+  updateSettings: (settings) =>
+    handleRequest(api.put('/admin/settings', settings)),
 
-  // Data Export
-  exportData: async (type, filters = {}) => {
+  /**
+   * Data Export
+   */
+  exportData: (type, filters = {}) => {
     const params = new URLSearchParams(filters);
-    const response = await api.get(`/admin/export/${type}?${params}`, {
-      responseType: 'blob'
-    });
-    return response.data;
+    return handleRequest(
+      api.get(`/admin/export/${type}?${params}`, {
+        responseType: 'blob'
+      })
+    );
   },
 
-  // Notifications
-  sendBulkNotification: async (notification) => {
-    const response = await api.post('/admin/notifications/send-bulk', notification);
-    return response.data.data;
-  },
+  /**
+   * Notifications
+   */
+  createBulkNotification: (notification) =>
+    handleRequest(
+      api.post('/admin/notifications/send-bulk', notification)
+    ),
 
-  // Content Moderation
-  getReportedContent: async (page = 1, limit = 50) => {
-    const response = await api.get(`/admin/content/reported?page=${page}&limit=${limit}`);
-    return response.data.data;
-  },
+  /**
+   * Content Moderation
+   */
+  getReportedContent: (page = 1, limit = 50) =>
+    handleRequest(
+      api.get(`/admin/content/reported?page=${page}&limit=${limit}`)
+    ),
 
-  moderateContent: async (contentId, action, reason) => {
-    const response = await api.post(`/admin/content/${contentId}/moderate`, { action, reason });
-    return response.data.data;
-  }
+  updateContentModeration: (contentId, action, reason) =>
+    handleRequest(
+      api.post(`/admin/content/${contentId}/moderate`, { action, reason })
+    )
 };
 
 export default AdminAPI;
