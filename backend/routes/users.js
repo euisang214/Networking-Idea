@@ -3,7 +3,8 @@ const router = express.Router();
 const UserController = require('../controllers/userController');
 const ComplianceController = require('../controllers/complianceController');
 const authenticate = require('../middlewares/authenticate');
-const { validators, validate } = require('../utils/validators');
+const { validate, schemas } = require('../utils/validation');
+const { validators } = schemas;
 
 // All routes require authentication
 router.use(authenticate);
@@ -12,12 +13,11 @@ router.use(authenticate);
 router.get('/profile', UserController.getProfile);
 
 // Update user profile
-router.put('/profile', [
-  validators.firstName,
-  validators.lastName,
-  validators.resume,
-  validate
-], UserController.updateProfile);
+router.put(
+  '/profile',
+  validate([validators.firstName, validators.lastName, validators.resume]),
+  UserController.updateProfile
+);
 
 // Delete user account
 router.delete('/account', UserController.deleteAccount);

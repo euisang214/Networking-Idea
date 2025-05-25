@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const ReferralController = require('../controllers/referralController');
 const authenticate = require('../middlewares/authenticate');
-const { validators, validate } = require('../utils/validators');
+const { validate, schemas } = require('../utils/validation');
+const { validators } = schemas;
 const rolesAllowed = require('../middlewares/rolesAllowed');
 
 // All routes require authentication
@@ -12,7 +13,7 @@ router.use(authenticate);
 router.post(
   '/',
   rolesAllowed(['professional']),
-  [validators.candidateEmail, validate],
+  validate(validators.candidateEmail),
   ReferralController.createReferral
 );
 
@@ -20,10 +21,11 @@ router.post(
 router.get('/me', ReferralController.getMyReferrals);
 
 // Get referral by ID
-router.get('/:referralId', [
-  validators.referralId,
-  validate
-], ReferralController.getReferral);
+router.get(
+  '/:referralId',
+  validate(validators.referralId),
+  ReferralController.getReferral
+);
 
 // Get all referrals for professional
 router.get(
@@ -43,7 +45,7 @@ router.get(
 router.put(
   '/:referralId/verify',
   rolesAllowed(['admin']),
-  [validators.referralId, validate],
+  validate(validators.referralId),
   ReferralController.verifyReferral
 );
 

@@ -1,61 +1,41 @@
 const express = require('express');
 const router = express.Router();
 const AuthController = require('../controllers/authController');
-const { validators, validate } = require('../utils/validators');
 const authenticate = require('../middlewares/authenticate');
-const celebrate = require('../middlewares/schemaValidator');
+const { validate, schemas } = require('../utils/validation');
+const { validators, authSchemas } = schemas;
 const { authLimiter } = require('../middlewares/rateLimiter');
-const Joi = celebrate.Joi;
 
 // Public routes
 router.post(
   '/register',
   authLimiter,
-  celebrate({
-    body: Joi.object({
-      email: Joi.string().email().required(),
-      password: Joi.string().min(8).required(),
-      firstName: Joi.string().required(),
-      lastName: Joi.string().required(),
-      userType: Joi.string().valid('candidate','professional','admin'),
-      resume: Joi.string()
-    })
-  }),
+  validate(authSchemas.register),
   AuthController.register
 );
 
 router.post(
   '/login',
   authLimiter,
-  celebrate({
-    body: Joi.object({
-      email: Joi.string().email().required(),
-      password: Joi.string().required()
-    })
-  }),
+  validate(authSchemas.login),
   AuthController.login
 );
 
 router.post(
   '/google',
   authLimiter,
-  celebrate({
-    body: Joi.object({
-      idToken: Joi.string().required(),
-      accessToken: Joi.string().required(),
-      refreshToken: Joi.string().optional()
-    })
-  }),
+  validate(authSchemas.google),
   AuthController.googleAuth
 );
 
 router.get('/verify-email', AuthController.verifyEmail);
 
-router.post('/forgot-password', [
+router.post(
+  '/forgot-password',
   authLimiter,
-  validators.email,
-  validate
-], AuthController.requestPasswordReset);
+  validate(validators.email),
+  AuthController.requestPasswordReset
+);
 
 router.post('/reset-password', authLimiter, AuthController.resetPassword);
 

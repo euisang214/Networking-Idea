@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router();
 const SessionController = require("../controllers/sessionController");
 const authenticate = require("../middlewares/authenticate");
-const { validators, validate } = require("../utils/validators");
+const { validate, schemas } = require("../utils/validation");
+const { validators } = schemas;
 
 // All routes require authentication
 router.use(authenticate);
@@ -12,16 +13,16 @@ router.post('/request', SessionController.requestSession);
 
 // Create session
 router.post(
-  "/",
-  [validators.startTime, validators.endTime, validate],
-  SessionController.createSession,
+  '/',
+  validate([validators.startTime, validators.endTime]),
+  SessionController.createSession
 );
 
 // Get session by ID
 router.get(
-  "/:sessionId",
-  [validators.sessionId, validate],
-  SessionController.getSession,
+  '/:sessionId',
+  validate(validators.sessionId),
+  SessionController.getSession
 );
 
 // Get sessions for current user
@@ -32,37 +33,37 @@ router.get("/professional/me", SessionController.getProfessionalSessions);
 
 // Update session status
 router.put(
-  "/:sessionId/status",
-  [validators.sessionId, validate],
-  SessionController.updateSessionStatus,
+  '/:sessionId/status',
+  validate(validators.sessionId),
+  SessionController.updateSessionStatus
 );
 
 // Reschedule session
 router.put(
-  "/:sessionId/reschedule",
-  [validators.sessionId, validators.startTime, validators.endTime, validate],
-  SessionController.rescheduleSession,
+  '/:sessionId/reschedule',
+  validate([validators.sessionId, validators.startTime, validators.endTime]),
+  SessionController.rescheduleSession
 );
 
 // Confirm session time
 router.post(
-  "/:sessionId/confirm",
-  [validators.sessionId, validators.startTime, validators.endTime, validate],
-  SessionController.confirmSession,
+  '/:sessionId/confirm',
+  validate([validators.sessionId, validators.startTime, validators.endTime]),
+  SessionController.confirmSession
 );
 
 // Process payment for session
 router.post(
-  "/:sessionId/payment",
-  [validators.sessionId, validate],
-  SessionController.processPayment,
+  '/:sessionId/payment',
+  validate(validators.sessionId),
+  SessionController.processPayment
 );
 
 // Add feedback to session
 router.post(
-  "/:sessionId/feedback",
-  [validators.sessionId, validators.rating, validate],
-  SessionController.addFeedback,
+  '/:sessionId/feedback',
+  validate([validators.sessionId, validators.rating]),
+  SessionController.addFeedback
 );
 
 // Check professional availability
