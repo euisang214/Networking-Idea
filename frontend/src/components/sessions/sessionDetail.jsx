@@ -337,6 +337,16 @@ const SessionDetail = () => {
                 <p className="text-gray-600 text-sm mb-4">
                   {session.user.email}
                 </p>
+                {session.user.resume && (
+                  <a
+                    href={session.user.resume}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 hover:text-blue-800 mb-4 block"
+                  >
+                    View Resume
+                  </a>
+                )}
               </div>
             ) : (
               <div>
