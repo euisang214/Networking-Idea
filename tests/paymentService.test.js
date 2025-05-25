@@ -91,6 +91,7 @@ vi.mock('../backend/services/emailService', () => ({
   sendPayoutNotification: vi.fn()
 }));
 
+process.env.STRIPE_SECRET_KEY = 'test';
 const PaymentService = require('../backend/services/paymentService');
 
 process.env.REFERRAL_REWARD_AMOUNT = '50';
