@@ -15,27 +15,29 @@ vi.mock('express-validator', () => {
 });
 
 const { ValidationError } = require('../backend/utils/errorTypes');
-const { validate } = require('../backend/utils/validators');
+const validate = require('../backend/utils/validation/middleware');
 const { validationResult } = require('express-validator');
 
 describe('validate middleware', () => {
-  it('calls next when no errors', () => {
+  it('calls next when no errors', async () => {
     validationResult.mockReturnValue({ isEmpty: () => true });
     const next = vi.fn();
-    validate({}, {}, next);
+    const mw = validate([]);
+    await mw({}, {}, next);
     expect(next).toHaveBeenCalled();
   });
 
-  it('throws ValidationError with formatted errors', () => {
+  it('throws ValidationError with formatted errors', async () => {
     const array = () => [
       { param: 'email', msg: 'Invalid email' },
       { param: 'password', msg: 'too short' }
     ];
     validationResult.mockReturnValue({ isEmpty: () => false, array });
-    expect(() => validate({}, {}, () => {})).toThrow(ValidationError);
+    const mw = validate([]);
     try {
-      validate({}, {}, () => {});
+      await mw({}, {}, () => {});
     } catch (e) {
+      expect(e).toBeInstanceOf(ValidationError);
       expect(e.errors).toEqual({ email: 'Invalid email', password: 'too short' });
     }
   });
