@@ -1,4 +1,6 @@
 const PaymentService = require('../services/paymentService');
+const ProfessionalService = require('../services/professionalService');
+const UserService = require('../services/userService');
 const responseFormatter = require('../utils/responseFormatter');
 const { ValidationError, AuthorizationError } = require('../utils/errorTypes');
 const logger = require('../utils/logger');
@@ -33,16 +35,7 @@ const PaymentController = {
   releaseSessionPayment: async (req, res, next) => {
     try {
       const { sessionId } = req.params;
-      const userId = req.user.id;
-      
-      // Check if user is an admin
-      const user = await req.app.get('db').user.findById(userId);
-      
-      if (!user || user.userType !== 'admin') {
-        throw new AuthorizationError('Only admins can manually release payments');
-      }
-      
-      // Release payment
+      await UserService.ensureAdmin(req.user.id);
       const result = await PaymentService.releaseSessionPayment(sessionId);
       
       return responseFormatter.success(res, {
@@ -58,16 +51,7 @@ const PaymentController = {
   processReferralPayment: async (req, res, next) => {
     try {
       const { referralId } = req.params;
-      const userId = req.user.id;
-      
-      // Check if user is an admin
-      const user = await req.app.get('db').user.findById(userId);
-      
-      if (!user || user.userType !== 'admin') {
-        throw new AuthorizationError('Only admins can manually process referral payments');
-      }
-      
-      // Process payment
+      await UserService.ensureAdmin(req.user.id);
       const result = await PaymentService.processReferralPayment(referralId);
       
       return responseFormatter.success(res, {
@@ -106,18 +90,7 @@ const PaymentController = {
   // Create Stripe connected account
   createConnectedAccount: async (req, res, next) => {
     try {
-      const userId = req.user.id;
-      
-      // Get professional ID
-      const professionalProfile = await req.app.get('db').professionalProfile.findOne({
-        user: userId
-      });
-      
-      if (!professionalProfile) {
-        throw new ValidationError('You do not have a professional profile');
-      }
-      
-      // Create connected account
+      const professionalProfile = await ProfessionalService.getProfileByUserId(req.user.id, true);
       const result = await PaymentService.createConnectedAccount(professionalProfile._id);
       
       return responseFormatter.success(res, {

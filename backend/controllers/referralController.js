@@ -1,4 +1,6 @@
 const ReferralService = require('../services/referralService');
+const ProfessionalService = require('../services/professionalService');
+const UserService = require('../services/userService');
 const responseFormatter = require('../utils/responseFormatter');
 const { ValidationError, AuthorizationError } = require('../utils/errorTypes');
 const logger = require('../utils/logger');
@@ -16,21 +18,13 @@ const ReferralController = {
         throw new ValidationError('Candidate email is required');
       }
       
-      // Get professional ID
-      const professionalProfile = await req.app.get('db').professionalProfile.findOne({
-        user: userId
-      });
-      
-      if (!professionalProfile) {
-        throw new ValidationError('You do not have a professional profile');
-      }
-      
-      // Create referral
-      const referral = await ReferralService.createReferral(
-        professionalProfile._id,
+      const professionalProfile = await ProfessionalService.getProfileByUserId(userId, true);
+
+      const referral = await ReferralService.createReferral({
+        professional: professionalProfile._id,
         candidateEmail,
-        referralType || 'link'
-      );
+        referralType: referralType || 'link'
+      });
       
       return responseFormatter.created(res, {
         referral
@@ -70,16 +64,7 @@ const ReferralController = {
     try {
       const userId = req.user.id;
       
-      // Get professional ID
-      const professionalProfile = await req.app.get('db').professionalProfile.findOne({
-        user: userId
-      });
-      
-      if (!professionalProfile) {
-        throw new ValidationError('You do not have a professional profile');
-      }
-      
-      // Get referrals
+      const professionalProfile = await ProfessionalService.getProfileByUserId(userId, true);
       const referrals = await ReferralService.getProfessionalReferrals(professionalProfile._id);
       
       return responseFormatter.success(res, {
@@ -114,15 +99,8 @@ const ReferralController = {
       let referrals;
 
       if (userType === 'professional') {
-        const professionalProfile = await req.app
-          .get('db')
-          .professionalProfile.findOne({ user: userId });
-        if (!professionalProfile) {
-          throw new ValidationError('You do not have a professional profile');
-        }
-        referrals = await ReferralService.getProfessionalReferrals(
-          professionalProfile._id
-        );
+        const professionalProfile = await ProfessionalService.getProfileByUserId(userId, true);
+        referrals = await ReferralService.getProfessionalReferrals(professionalProfile._id);
       } else if (userType === 'candidate') {
         referrals = await ReferralService.getCandidateReferrals(userId);
       } else {
@@ -139,16 +117,7 @@ const ReferralController = {
   verifyReferral: async (req, res, next) => {
     try {
       const { referralId } = req.params;
-      const userId = req.user.id;
-      
-      // Check if user is an admin
-      const user = await req.app.get('db').user.findById(userId);
-      
-      if (!user || user.userType !== 'admin') {
-        throw new AuthorizationError('Only admins can manually verify referrals');
-      }
-      
-      // Verify referral
+      await UserService.ensureAdmin(req.user.id);
       const referral = await ReferralService.verifyReferral(referralId);
       
       return responseFormatter.success(res, {
