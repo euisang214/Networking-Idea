@@ -8,6 +8,7 @@ const logger = require('../utils/logger');
 const responseFormatter = require('../utils/responseFormatter');
 const { ExternalServiceError } = require('../utils/errorTypes');
 const { verifySendGridSignature } = require('../utils/signatureUtils');
+const config = require('../config');
 const Ajv = require('ajv');
 const eventSchema = require('../schemas/sendgridEventSchema.json');
 const ajv = new Ajv();
@@ -24,7 +25,7 @@ const handleReferralEmail = async (emailData) => {
     const ccEmails = emailData.cc ? emailData.cc.split(',').map(e => e.trim()) : [];
     
     // Check if platform email was CC'd
-    const platformEmail = process.env.PLATFORM_EMAIL || 'referrals@mentorconnect.com';
+    const platformEmail = config.email.platformEmail;
     const platformCCd = ccEmails.includes(platformEmail);
     
     if (!platformCCd) {
@@ -141,7 +142,7 @@ router.post('/events', async (req, res) => {
   try {
     logger.info('Received email events webhook from SendGrid');
 
-    if (!verifySendGridSignature(req, process.env.SENDGRID_WEBHOOK_SECRET)) {
+    if (!verifySendGridSignature(req, config.email.sendgridWebhookSecret)) {
       logger.warn('Invalid SendGrid signature');
       return responseFormatter.error(res, 'Invalid signature', 401);
     }

@@ -6,6 +6,7 @@ const configurePassport = require('./config/passport');
 const configureMiddleware = require('./config/middleware');
 const apiRoutes = require('./routes/api');
 const logger = require('./utils/logger');
+const config = require('./config');
 const cronJobs = require('./cron');
 const metrics = require('./utils/metrics');
 const { archiveLogs } = require('./utils/compliance');
@@ -27,7 +28,7 @@ configurePassport();
 app.use('/api', apiRoutes);
 
 // Serve static assets in production
-if (process.env.NODE_ENV === 'production') {
+if (config.app.env === 'production') {
   // Set static folder
   app.use(express.static(path.join(__dirname, '../frontend/build')));
   
@@ -48,7 +49,7 @@ app.use(errorHandler);
 // Set up Socket.io
 const io = socketIo(server, {
   cors: {
-    origin: process.env.NODE_ENV === 'production' ? false : ['http://localhost:3000'],
+    origin: config.app.env === 'production' ? false : ['http://localhost:3000'],
     methods: ['GET', 'POST'],
     credentials: true
   }

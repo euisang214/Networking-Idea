@@ -8,6 +8,7 @@ const {
   ConflictError 
 } = require('../utils/errorTypes');
 const logger = require('../utils/logger');
+const config = require('../config');
 
 /**
  * Global error handling middleware
@@ -70,7 +71,7 @@ const errorHandler = (err, req, res, next) => {
   }
   
   // Default to 500 server error
-  return responseFormatter.serverError(res, process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message);
+  return responseFormatter.serverError(res, config.app.env === 'production' ? 'Internal server error' : err.message);
 };
 
 module.exports = errorHandler;

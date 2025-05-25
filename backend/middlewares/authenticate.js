@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const { AuthenticationError } = require('../utils/errorTypes');
 const logger = require('../utils/logger');
+const config = require('../config');
 
 /**
  * Authentication middleware
@@ -26,7 +27,7 @@ const authenticate = async (req, res, next) => {
     // Verify token
     let decoded;
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
+      decoded = jwt.verify(token, config.auth.jwtSecret);
     } catch (error) {
       throw new AuthenticationError('Invalid or expired token');
     }

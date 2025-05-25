@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 const EmailService = require('./emailService');
 const logger = require('../utils/logger');
 const GoogleService = require('./googleService');
+const config = require('../config');
 
 class AuthService {
   // Register a new user
@@ -38,7 +39,7 @@ class AuthService {
         'email-verification',
         {
           userName: `${user.firstName} ${user.lastName}`,
-          verificationUrl: `${process.env.FRONTEND_URL}/verify-email?token=${user.emailVerificationToken}`
+          verificationUrl: `${config.app.frontendUrl}/verify-email?token=${user.emailVerificationToken}`
         }
       );
       
@@ -210,7 +211,7 @@ class AuthService {
         'password-reset',
         {
           userName: `${user.firstName} ${user.lastName}`,
-          resetUrl: `${process.env.FRONTEND_URL}/reset-password?token=${user.passwordResetToken}`
+          resetUrl: `${config.app.frontendUrl}/reset-password?token=${user.passwordResetToken}`
         }
       );
       
@@ -258,15 +259,15 @@ class AuthService {
         email: user.email,
         userType: user.userType
       },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      config.auth.jwtSecret,
+      { expiresIn: config.auth.jwtExpiresIn }
     );
   }
 
   // Verify JWT token
   verifyToken(token) {
     try {
-      return jwt.verify(token, process.env.JWT_SECRET);
+      return jwt.verify(token, config.auth.jwtSecret);
     } catch (error) {
       return null;
     }

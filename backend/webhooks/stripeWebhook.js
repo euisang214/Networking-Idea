@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const config = require('../config');
+const stripe = require('stripe')(config.stripe.secretKey);
 const User = require('../models/user');
 const ProfessionalProfile = require('../models/professionalProfile');
 const Session = require('../models/session');
@@ -19,7 +20,7 @@ const verifyStripeSignature = (req) => {
     return stripe.webhooks.constructEvent(
       req.rawBody,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET
+      config.stripe.webhookSecret
     );
   } catch (err) {
     logger.error(`Stripe webhook signature verification failed: ${err.message}`);
@@ -65,7 +66,7 @@ const handlePaymentIntentSucceeded = async (paymentIntent) => {
       session: sessionId,
       platformFee: {
         amount: paymentIntent.application_fee_amount ? paymentIntent.application_fee_amount / 100 : null,
-        percentage: process.env.PLATFORM_FEE_PERCENT
+        percentage: config.business.platformFeePercent
       },
       completedAt: new Date()
     });
