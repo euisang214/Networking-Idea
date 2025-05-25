@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../hooks';
 import SessionList from '../components/sessions/SessionList';
 import Card from '../components/common/Card';
 

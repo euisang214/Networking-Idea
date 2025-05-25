@@ -5,7 +5,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { LockClosedIcon } from '@heroicons/react/outline';
 import { Input, Button, Card } from '../../components/common';
-import useAuth from '../../hooks/useAuth';
+import { useAuth } from '../../hooks';
 import AuthAPI from '../../api/auth';
 
 const ResetPassword = () => {

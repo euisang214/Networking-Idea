@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../hooks';
 import ProfessionalsAPI from '../../api/professionals';
 import SessionsAPI from '../../api/sessions';
 import Button from '../common/Button';
