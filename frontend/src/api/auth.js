@@ -1,58 +1,80 @@
 import api from '../services/api/client';
+import { handleRequest } from '../services/api/helpers';
 
 const AuthAPI = {
-  // Register a new user
-  register: async (userData) => {
-    const response = await api.post('/auth/register', userData);
-    return response.data;
-  },
+  /**
+   * Create a new user account
+   * @param {Object} userData - Registration details
+   * @returns {Promise<Object>} Created user data
+   */
+  createUser: async (userData) =>
+    handleRequest(api.post('/auth/register', userData)),
   
-  // Login user
-  login: async (credentials) => {
-    const response = await api.post('/auth/login', credentials);
-    // Store token and user data in localStorage
-    if (response.data.data.token) {
-      localStorage.setItem('token', response.data.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.data.user));
+  /**
+   * Authenticate user credentials
+   * @param {Object} credentials - Login email and password
+   * @returns {Promise<Object>} Auth session information
+   */
+  createSession: async (credentials) => {
+    const data = await handleRequest(api.post('/auth/login', credentials));
+    if (data.token) {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
     }
-    return response.data;
+    return data;
   },
   
-  // Logout user
-  logout: () => {
+  /**
+   * Remove stored auth session
+   */
+  deleteSession: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
   },
   
-  // Get current user
-  getCurrentUser: async () => {
-    const response = await api.get('/auth/me');
-    return response.data.data.user;
-  },
+  /**
+   * Fetch the current authenticated user
+   * @returns {Promise<Object>} Current user data
+   */
+  getCurrentUser: () => handleRequest(api.get('/auth/me')),
   
-  // Verify email
-  verifyEmail: async (token) => {
-    const response = await api.get(`/auth/verify-email?token=${token}`);
-    return response.data;
-  },
+  /**
+   * Verify user email address
+   * @param {string} token - Verification token
+   * @returns {Promise<Object>} Verification result
+   */
+  updateEmailVerification: (token) =>
+    handleRequest(api.get(`/auth/verify-email?token=${token}`)),
   
-  // Request password reset
-  requestPasswordReset: async (email) => {
-    const response = await api.post('/auth/forgot-password', { email });
-    return response.data;
-  },
+  /**
+   * Request a password reset email
+   * @param {string} email - User email address
+   * @returns {Promise<Object>} Request status
+   */
+  createPasswordResetRequest: (email) =>
+    handleRequest(api.post('/auth/forgot-password', { email })),
   
-  // Reset password
-  resetPassword: async (token, newPassword) => {
-    const response = await api.post('/auth/reset-password', { token, newPassword });
-    return response.data;
-  },
+  /**
+   * Reset password using a reset token
+   * @param {string} token - Reset token
+   * @param {string} newPassword - New password
+   * @returns {Promise<Object>} Operation result
+   */
+  updatePasswordWithToken: (token, newPassword) =>
+    handleRequest(
+      api.post('/auth/reset-password', { token, newPassword })
+    ),
   
-  // Change password
-  changePassword: async (currentPassword, newPassword) => {
-    const response = await api.post('/auth/change-password', { currentPassword, newPassword });
-    return response.data;
-  }
+  /**
+   * Change password for the current user
+   * @param {string} currentPassword - Existing password
+   * @param {string} newPassword - Desired new password
+   * @returns {Promise<Object>} Operation result
+   */
+  updatePassword: (currentPassword, newPassword) =>
+    handleRequest(
+      api.post('/auth/change-password', { currentPassword, newPassword })
+    )
 };
 
 export default AuthAPI;

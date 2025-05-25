@@ -80,7 +80,7 @@ const RegisterForm = () => {
         });
       }
 
-      await AuthAPI.register({
+      await AuthAPI.createUser({
         firstName: values.firstName,
         lastName: values.lastName,
         email: values.email,

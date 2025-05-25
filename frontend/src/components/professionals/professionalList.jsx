@@ -27,7 +27,7 @@ const ProfessionalList = () => {
     setError('');
     
     try {
-      const response = await ProfessionalsAPI.searchProfessionals(
+      const response = await ProfessionalsAPI.getProfessionals(
         filters, 
         pagination.page, 
         pagination.limit
