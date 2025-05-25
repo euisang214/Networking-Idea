@@ -1,4 +1,5 @@
 const SessionService = require("../services/sessionService");
+const ProfessionalService = require("../services/professionalService");
 const PaymentService = require("../services/paymentService");
 const ZoomService = require("../services/zoomService");
 const responseFormatter = require("../utils/responseFormatter");
@@ -128,16 +129,7 @@ const SessionController = {
       const userId = req.user.id;
       const { status, limit = 10, page = 1 } = req.query;
 
-      // Get professional profile
-      const professionalProfile = await req.app
-        .get("db")
-        .professionalProfile.findOne({
-          user: userId,
-        });
-
-      if (!professionalProfile) {
-        throw new ValidationError("You do not have a professional profile");
-      }
+      const professionalProfile = await ProfessionalService.getProfileByUserId(userId, true);
 
       const { sessions, total } = await SessionService.getProfessionalSessions(
         professionalProfile._id,

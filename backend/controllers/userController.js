@@ -1,38 +1,13 @@
-const User = require('../models/user');
-const ProfessionalService = require('../services/professionalService');
+const UserService = require('../services/userService');
 const responseFormatter = require('../utils/responseFormatter');
-const { ValidationError, AuthorizationError } = require('../utils/errorTypes');
-const logger = require('../utils/logger');
-const GoogleService = require('../services/googleService');
 
 // Controller for user-related operations
 const UserController = {
   // Get user profile
   getProfile: async (req, res, next) => {
     try {
-      const userId = req.user.id;
-      
-      // Get user
-      const user = await User.findById(userId).select('-password');
-      
-      if (!user) {
-        throw new ValidationError('User not found');
-      }
-      
-      // Check if user has a professional profile
-      let professionalProfile = null;
-      if (user.userType === 'professional') {
-        try {
-          professionalProfile = await ProfessionalService.getProfileByUserId(userId, true);
-        } catch (error) {
-          // Professional profile not found, that's fine
-        }
-      }
-      
-      return responseFormatter.success(res, {
-        user,
-        professionalProfile
-      });
+      const { user, professionalProfile } = await UserService.getProfile(req.user.id);
+      return responseFormatter.success(res, { user, professionalProfile });
     } catch (error) {
       next(error);
     }
@@ -41,51 +16,8 @@ const UserController = {
   // Update user profile
   updateProfile: async (req, res, next) => {
     try {
-      const userId = req.user.id;
-      const { firstName, lastName, phoneNumber, profileImage, resume, settings } = req.body;
-      
-      // Get user
-      const user = await User.findById(userId);
-      
-      if (!user) {
-        throw new ValidationError('User not found');
-      }
-      
-      // Update fields
-      if (firstName) user.firstName = firstName;
-      if (lastName) user.lastName = lastName;
-      if (phoneNumber) user.phoneNumber = phoneNumber;
-      if (profileImage) user.profileImage = profileImage;
-      if (resume) user.resume = resume;
-      
-      // Update settings
-      if (settings) {
-        if (settings.notifications) {
-          user.settings.notifications = {
-            ...user.settings.notifications,
-            ...settings.notifications
-          };
-        }
-        
-        if (settings.timezone) user.settings.timezone = settings.timezone;
-        if (settings.language) user.settings.language = settings.language;
-      }
-      
-      await user.save();
-      
-      return responseFormatter.success(res, {
-        user: {
-          _id: user._id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          email: user.email,
-          userType: user.userType,
-          profileImage: user.profileImage,
-          phoneNumber: user.phoneNumber,
-          resume: user.resume,
-          settings: user.settings
-        }
-      }, 'Profile updated successfully');
+      const updated = await UserService.updateProfile(req.user.id, req.body);
+      return responseFormatter.success(res, { user: updated }, 'Profile updated successfully');
     } catch (error) {
       next(error);
     }
@@ -94,27 +26,7 @@ const UserController = {
   // Delete user account
   deleteAccount: async (req, res, next) => {
     try {
-      const userId = req.user.id;
-      const { password } = req.body;
-      
-      // Get user
-      const user = await User.findById(userId);
-      
-      if (!user) {
-        throw new ValidationError('User not found');
-      }
-      
-      // Verify password
-      const isMatch = await user.comparePassword(password);
-      
-      if (!isMatch) {
-        throw new ValidationError('Invalid password');
-      }
-      
-      // Deactivate account instead of deleting
-      user.isActive = false;
-      await user.save();
-      
+      await UserService.deactivateAccount(req.user.id, req.body.password);
       return responseFormatter.success(res, {}, 'Account deactivated successfully');
     } catch (error) {
       next(error);
@@ -124,18 +36,8 @@ const UserController = {
   // Get user type
   getUserType: async (req, res, next) => {
     try {
-      const userId = req.user.id;
-      
-      // Get user
-      const user = await User.findById(userId).select('userType');
-      
-      if (!user) {
-        throw new ValidationError('User not found');
-      }
-      
-      return responseFormatter.success(res, {
-        userType: user.userType
-      });
+      const userType = await UserService.getUserType(req.user.id);
+      return responseFormatter.success(res, { userType });
     } catch (error) {
       next(error);
     }
@@ -144,28 +46,8 @@ const UserController = {
   // Set user type
   setUserType: async (req, res, next) => {
     try {
-      const userId = req.user.id;
-      const { userType } = req.body;
-      
-      // Validate user type
-      if (!userType || !['candidate', 'professional'].includes(userType)) {
-        throw new ValidationError('Invalid user type');
-      }
-      
-      // Get user
-      const user = await User.findById(userId);
-      
-      if (!user) {
-        throw new ValidationError('User not found');
-      }
-      
-      // Update user type
-      user.userType = userType;
-      await user.save();
-      
-      return responseFormatter.success(res, {
-        userType: user.userType
-      }, 'User type updated successfully');
+      const newType = await UserService.setUserType(req.user.id, req.body.userType);
+      return responseFormatter.success(res, { userType: newType }, 'User type updated successfully');
     } catch (error) {
       next(error);
     }
@@ -174,20 +56,7 @@ const UserController = {
   // Get Google Calendar availability for current user
   getCalendarAvailability: async (req, res, next) => {
     try {
-      const user = await User.findById(req.user.id);
-      if (!user) {
-        throw new ValidationError('User not found');
-      }
-      if (!user.googleAccessToken) {
-        throw new ValidationError('Google account not connected');
-      }
-      const now = new Date();
-      const week = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
-      const busy = await GoogleService.getAvailability(
-        user.googleAccessToken,
-        now.toISOString(),
-        week.toISOString()
-      );
+      const busy = await UserService.getCalendarAvailability(req.user.id);
       return responseFormatter.success(res, { busy });
     } catch (error) {
       next(error);

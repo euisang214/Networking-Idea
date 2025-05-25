@@ -6,6 +6,9 @@ vi.mock('../backend/services/referralService', () => ({
   getProfessionalReferrals: vi.fn(),
   getCandidateReferrals: vi.fn(),
 }));
+vi.mock('../backend/services/professionalService', () => ({
+  getProfileByUserId: vi.fn(async (id) => ({ _id: id }))
+}));
 
 const responseFormatter = require('../backend/utils/responseFormatter');
 vi.spyOn(responseFormatter, 'success');
@@ -14,18 +17,13 @@ const ReferralService = require('../backend/services/referralService');
 
 const ReferralController = require('../backend/controllers/referralController');
 
-function mockReq(user, profileId) {
-  return {
-    user,
-    app: {
-      get: () => ({ professionalProfile: { findOne: vi.fn().mockReturnValue(Promise.resolve(profileId ? { _id: profileId } : null)) } })
-    }
-  };
+function mockReq(user) {
+  return { user };
 }
 
 describe('ReferralController.getMyReferrals', () => {
   it('fetches professional referrals', async () => {
-    const req = mockReq({ id: '1', userType: 'professional' }, 'prof1');
+    const req = mockReq({ id: 'prof1', userType: 'professional' });
     ReferralService.getProfessionalReferrals.mockReturnValue(Promise.resolve([{ _id: 'r' }]));
     const res = {};
     await ReferralController.getMyReferrals(req, res, () => {});
