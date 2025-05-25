@@ -61,10 +61,14 @@ function mock(modulePath, factory) {
   try {
     resolved = Module._resolveFilename(modulePath, module.parent);
   } catch {
-    resolved = modulePath;
+    resolved = undefined;
   }
-  mockModules[resolved] = factory();
-  return mockModules[resolved];
+  const mod = factory();
+  mockModules[modulePath] = mod;
+  if (resolved && resolved !== modulePath) {
+    mockModules[resolved] = mod;
+  }
+  return mod;
 }
 
 function clearAllMocks() {
@@ -84,6 +88,9 @@ Module._load = function(request, parent, isMain) {
   }
   if (Object.prototype.hasOwnProperty.call(mockModules, resolved)) {
     return mockModules[resolved];
+  }
+  if (Object.prototype.hasOwnProperty.call(mockModules, request)) {
+    return mockModules[request];
   }
   return originalLoad(request, parent, isMain);
 };
