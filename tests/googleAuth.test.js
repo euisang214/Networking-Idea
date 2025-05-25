@@ -21,6 +21,7 @@ vi.mock('bcryptjs', () => ({ genSalt: vi.fn(), hash: vi.fn(), compare: vi.fn() }
 vi.mock('crypto', () => ({ randomBytes: () => Buffer.from('rand') }));
 vi.mock('jsonwebtoken', () => ({ sign: () => 'token' }));
 
+process.env.JWT_SECRET = 'secret';
 const AuthService = require('../backend/services/authService');
 
 describe('AuthService.googleLogin', () => {
