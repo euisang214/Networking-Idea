@@ -11,7 +11,10 @@ const { verifySendGridSignature } = require('../utils/signatureUtils');
 const config = require('../config');
 const Ajv = require('ajv');
 const eventSchema = require('../schemas/sendgridEventSchema.json');
-const ajv = new Ajv();
+// Ajv 8 requires formats to be added manually. Define a basic email format
+// so the schema with "format": "email" compiles without throwing errors.
+const ajv = new Ajv({ strict: false });
+ajv.addFormat('email', /^[^\s@]+@[^\s@]+\.[^\s@]+$/);
 const validateEvents = ajv.compile(eventSchema);
 
 // Replace the handleReferralEmail function with this:
