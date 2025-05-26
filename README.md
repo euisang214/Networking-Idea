@@ -61,11 +61,11 @@ access to specific roles (e.g. `candidate`, `professional`, `admin`).
 3. Edit `.env` with your own credentials for MongoDB, Stripe, SendGrid, Zoom, Google OAuth and other keys. These variables are used by both the backend and frontend services. Set `MOCK_INTEGRATIONS=true` if you want to run the app without contacting the real external services.
 4. **Option A: Docker Compose (recommended)**
    1. Ensure Docker is running.
-   2. Start the stack:
+   2. Start the stack (set `API_PORT` in `.env` if port 5000 is already in use):
       ```bash
       docker compose up --build
       ```
-   3. The frontend will be available at `http://localhost:3000` and the API at `http://localhost:5000`.
+   3. The frontend will be available at `http://localhost:3000` and the API at `http://localhost:${API_PORT:-5000}`.
 5. **Option B: Run services manually**
    1. Install frontend dependencies:
       ```bash
