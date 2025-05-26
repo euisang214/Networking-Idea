@@ -14,7 +14,9 @@ const mockSession = {
   status: 'completed',
   save: vi.fn()
 };
-vi.mock('../backend/models/session', () => ({
+const path = require('path');
+const sessionModelPath = require.resolve('../models/session', { paths: [path.join(__dirname, '../backend/services')] });
+vi.mock(sessionModelPath, () => ({
   findById: vi.fn(() => ({
     populate: () => ({
       populate: () => Promise.resolve(mockSession)
@@ -30,10 +32,12 @@ const mockUser = {
   stripeCustomerId: null,
   save: vi.fn()
 };
-vi.mock('../backend/models/user', () => ({
+const userModelPath = require.resolve('../models/user', { paths: [path.join(__dirname, '../backend/services')] });
+vi.mock(userModelPath, () => ({
   findById: vi.fn(() => Promise.resolve(mockUser))
 }));
-vi.mock('../backend/models/professionalProfile', () => ({
+const profModelPath = require.resolve('../models/professionalProfile', { paths: [path.join(__dirname, '../backend/services')] });
+vi.mock(profModelPath, () => ({
   findById: vi.fn(() => Promise.resolve({
     _id: 'pro1',
     statistics: { completedSessions: 0, totalEarnings: 0 },
@@ -74,7 +78,8 @@ const mockReferral = {
   save: vi.fn()
 };
 
-vi.mock('../backend/models/referral', () => ({
+const referralModelPath = require.resolve('../models/referral', { paths: [path.join(__dirname, '../backend/services')] });
+vi.mock(referralModelPath, () => ({
   findById: () => ({
     populate: () => ({
       populate: () => Promise.resolve(mockReferral)

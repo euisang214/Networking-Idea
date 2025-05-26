@@ -16,7 +16,10 @@ vi.mock('@apidevtools/openapi-schemas', () => ({}));
 vi.mock('swagger-ui-express', () => ({ serve: (req, res, next) => next(), setup: () => (req, res, next) => next() }));
 vi.mock('ajv', () => {
   return function() {
-    return { compile: () => () => true };
+    return {
+      addFormat: () => {},
+      compile: () => () => true
+    };
   };
 });
 

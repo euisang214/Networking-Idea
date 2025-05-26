@@ -9,15 +9,20 @@ const config = require('../config');
  * @param {string} message - Error message
  */
 const createRateLimiter = (max = 100, windowMin = 15, message = 'Too many requests, please try again later') => {
-  return rateLimit({
-    windowMs: windowMin * 60 * 1000, // convert to milliseconds
+  const options = {
+    windowMs: windowMin * 60 * 1000,
     max,
     handler: (req, res, next) => {
       next(new RateLimitError(message));
     },
-    standardHeaders: true, // Return rate limit info in the headers
-    legacyHeaders: false // Disable X-RateLimit headers
-  });
+    standardHeaders: true,
+    legacyHeaders: false
+  };
+  const middleware = rateLimit(options);
+  // expose config for testing/introspection
+  middleware.max = options.max;
+  middleware.windowMs = options.windowMs;
+  return middleware;
 };
 
 // Different rate limiters for different routes

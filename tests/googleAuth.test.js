@@ -1,6 +1,7 @@
 const { describe, it, expect, vi } = require('./test-helpers');
 
 const saved = [];
+const path = require('path');
 class User {
   constructor(data) { Object.assign(this, data); }
   save = vi.fn(async () => { saved.push(this); return this; });
@@ -9,7 +10,8 @@ class User {
       (query.email && u.email === query.email));
   }
 }
-vi.mock('../backend/models/user', () => User);
+const userPath = require.resolve('../models/user', { paths: [path.join(__dirname, '../backend/services')] });
+vi.mock(userPath, () => User);
 vi.mock('../backend/services/googleService', () => ({
   verifyIdToken: vi.fn(() => Promise.resolve({
     sub: 'gid', email: 'g@test.com', given_name: 'G', family_name: 'U'
