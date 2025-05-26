@@ -29,8 +29,12 @@ function getEnv(name) {
  * @returns {AppConfig}
  */
 function loadConfig() {
+  // Check if running in Docker by looking for common Docker environment variables
+  const isDocker = process.env.REACT_APP_DOCKER === 'true' || 
+                   window.location.hostname === 'localhost' && window.location.port === '80';
+  
   const config = {
-    apiUrl: getEnv('REACT_APP_API_URL') || '/api',
+    apiUrl: getEnv('REACT_APP_API_URL') || (isDocker ? '/api' : 'http://localhost:8000/api'),
     stripePublicKey: getEnv('REACT_APP_STRIPE_PUBLIC_KEY'),
   };
 
@@ -40,7 +44,6 @@ function loadConfig() {
 
   return config;
 }
-
 const config = loadConfig();
 
 export default config;

@@ -79,6 +79,8 @@ services:
       - backend
     networks:
       - app-network
+    environment:
+    - REACT_APP_DOCKER=true
 
   nginx:
     image: nginx:alpine
