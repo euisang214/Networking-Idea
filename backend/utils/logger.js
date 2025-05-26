@@ -1,11 +1,13 @@
 const winston = require('winston');
+const TransportStream = require('winston-transport');
 const path = require('path');
 const fs = require('fs');
 const { inc } = require('./metrics');
 const config = require('../config');
 
-class LokiTransport {
+class LokiTransport extends TransportStream {
   constructor(opts = {}) {
+    super(opts);
     this.endpoint = opts.endpoint;
   }
   log(info, callback) {
