@@ -2,7 +2,7 @@ FROM node:lts-alpine
 
 # Run locally
 ENV NODE_ENV=development
-# Run production
+# Run productione
 # ENV NODE_ENV=production
 
 WORKDIR /usr/src/app
