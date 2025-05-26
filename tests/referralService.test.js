@@ -22,7 +22,9 @@ const mockReferral = {
   save: vi.fn()
 };
 
-vi.mock('../backend/models/referral', () => ({
+const path = require('path');
+const referralModelPath = require.resolve('../models/referral', { paths: [path.join(__dirname, '../backend/services')] });
+vi.mock(referralModelPath, () => ({
   findById: vi.fn(() => Promise.resolve({ ...mockReferral })),
   countDocuments: vi.fn(() => Promise.resolve(5)),
   findOne: vi.fn(() => Promise.resolve({ payoutDate: new Date() }))
