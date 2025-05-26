@@ -66,6 +66,10 @@ access to specific roles (e.g. `candidate`, `professional`, `admin`).
       docker compose up --build
       ```
    3. The frontend will be available at `http://localhost:3000` and the API at `http://localhost:${API_PORT:-5000}`.
+   4. When you're done, stop the stack:
+      ```bash
+      docker compose down
+      ```
 5. **Option B: Run services manually**
    1. Install frontend dependencies:
       ```bash
