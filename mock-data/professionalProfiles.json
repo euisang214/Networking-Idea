@@ -1,0 +1,65 @@
+[
+  {
+    "_id": "prof-1",
+    "user": "user-prof-1",
+    "title": "Senior Software Engineer",
+    "company": "comp-acme",
+    "industry": "ind-tech",
+    "yearsOfExperience": 8,
+    "skills": ["JavaScript", "Node.js", "React"],
+    "bio": "Passionate developer with a focus on scalable web applications.",
+    "hourlyRate": 120,
+    "availability": [
+      { "day": "monday", "startTime": "09:00", "endTime": "17:00" },
+      { "day": "wednesday", "startTime": "09:00", "endTime": "17:00" }
+    ],
+    "statistics": { "averageRating": 4.8, "completedSessions": 25 }
+  },
+  {
+    "_id": "prof-2",
+    "user": "user-prof-2",
+    "title": "Investment Analyst",
+    "company": "comp-finbank",
+    "industry": "ind-fin",
+    "yearsOfExperience": 6,
+    "skills": ["Financial Modeling", "Excel", "Markets"],
+    "bio": "Helping clients navigate complex financial landscapes.",
+    "hourlyRate": 150,
+    "availability": [
+      { "day": "tuesday", "startTime": "10:00", "endTime": "18:00" },
+      { "day": "thursday", "startTime": "10:00", "endTime": "18:00" }
+    ],
+    "statistics": { "averageRating": 4.6, "completedSessions": 18 }
+  },
+  {
+    "_id": "prof-3",
+    "user": "user-prof-3",
+    "title": "Clinical Researcher",
+    "company": "comp-healthplus",
+    "industry": "ind-health",
+    "yearsOfExperience": 10,
+    "skills": ["Clinical Trials", "Data Analysis", "Regulatory"],
+    "bio": "Experienced in conducting large-scale clinical studies.",
+    "hourlyRate": 110,
+    "availability": [
+      { "day": "friday", "startTime": "08:00", "endTime": "14:00" }
+    ],
+    "statistics": { "averageRating": 4.9, "completedSessions": 40 }
+  },
+  {
+    "_id": "prof-4",
+    "user": "user-prof-4",
+    "title": "Digital Marketing Strategist",
+    "company": "comp-marketworks",
+    "industry": "ind-marketing",
+    "yearsOfExperience": 5,
+    "skills": ["SEO", "Content Marketing", "Analytics"],
+    "bio": "Growth-focused marketer with a track record in startups.",
+    "hourlyRate": 100,
+    "availability": [
+      { "day": "monday", "startTime": "12:00", "endTime": "20:00" },
+      { "day": "wednesday", "startTime": "12:00", "endTime": "20:00" }
+    ],
+    "statistics": { "averageRating": 4.7, "completedSessions": 15 }
+  }
+]

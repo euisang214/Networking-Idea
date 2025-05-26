@@ -1,0 +1,50 @@
+[
+  {
+    "_id": "sess-1",
+    "professional": "prof-1",
+    "user": "user-cand-1",
+    "startTime": "2023-11-20T15:00:00Z",
+    "endTime": "2023-11-20T15:30:00Z",
+    "status": "scheduled",
+    "paymentStatus": "paid",
+    "price": 60,
+    "notes": "Looking for advice on scaling Node.js apps"
+  },
+  {
+    "_id": "sess-2",
+    "professional": "prof-2",
+    "user": "user-cand-1",
+    "startTime": "2023-09-10T17:00:00Z",
+    "endTime": "2023-09-10T17:30:00Z",
+    "status": "completed",
+    "paymentStatus": "released",
+    "price": 75,
+    "feedback": {
+      "rating": 5,
+      "comment": "Very insightful session",
+      "providedAt": "2023-09-10T18:00:00Z"
+    }
+  },
+  {
+    "_id": "sess-3",
+    "professional": "prof-3",
+    "user": "user-cand-2",
+    "startTime": "2023-10-05T13:00:00Z",
+    "endTime": "2023-10-05T13:30:00Z",
+    "status": "cancelled",
+    "paymentStatus": "refunded",
+    "price": 55,
+    "notes": "Discuss clinical research opportunities"
+  },
+  {
+    "_id": "sess-4",
+    "professional": "prof-4",
+    "user": "user-cand-1",
+    "startTime": "2023-12-01T19:00:00Z",
+    "endTime": "2023-12-01T19:30:00Z",
+    "status": "scheduled",
+    "paymentStatus": "pending",
+    "price": 50,
+    "notes": "Marketing strategies for a new startup"
+  }
+]

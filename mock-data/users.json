@@ -1,0 +1,50 @@
+[
+  {
+    "_id": "user-cand-1",
+    "email": "alice@example.com",
+    "firstName": "Alice",
+    "lastName": "Anderson",
+    "userType": "candidate",
+    "emailVerified": true
+  },
+  {
+    "_id": "user-cand-2",
+    "email": "bob@example.com",
+    "firstName": "Bob",
+    "lastName": "Baker",
+    "userType": "candidate",
+    "emailVerified": true
+  },
+  {
+    "_id": "user-prof-1",
+    "email": "cathy@acme.example.com",
+    "firstName": "Cathy",
+    "lastName": "Chen",
+    "userType": "professional",
+    "emailVerified": true
+  },
+  {
+    "_id": "user-prof-2",
+    "email": "dan@finbank.example.com",
+    "firstName": "Dan",
+    "lastName": "Davis",
+    "userType": "professional",
+    "emailVerified": true
+  },
+  {
+    "_id": "user-prof-3",
+    "email": "eva@healthplus.example.com",
+    "firstName": "Eva",
+    "lastName": "Edwards",
+    "userType": "professional",
+    "emailVerified": true
+  },
+  {
+    "_id": "user-prof-4",
+    "email": "frank@marketworks.example.com",
+    "firstName": "Frank",
+    "lastName": "Foster",
+    "userType": "professional",
+    "emailVerified": true
+  }
+]

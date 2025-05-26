@@ -1,0 +1,43 @@
+[
+  {
+    "_id": "ref-1",
+    "professional": "prof-1",
+    "candidate": "user-cand-1",
+    "referralType": "email",
+    "status": "rewarded",
+    "emailDetails": {
+      "senderEmail": "cathy@acme.example.com",
+      "senderDomain": "acme.example.com",
+      "recipientEmail": "hiring@acme.example.com",
+      "recipientDomain": "acme.example.com",
+      "referralEmailId": "email-abc123",
+      "ccEmails": ["referrals@mentorconnect.com"],
+      "subject": "Great candidate for our team",
+      "timestamp": "2023-08-15T14:00:00Z"
+    },
+    "emailDomainVerified": true,
+    "rewardAmount": 100,
+    "paymentStatus": "paid",
+    "payoutDate": "2023-08-20T00:00:00Z"
+  },
+  {
+    "_id": "ref-2",
+    "professional": "prof-2",
+    "candidate": "user-cand-2",
+    "referralType": "email",
+    "status": "pending",
+    "emailDetails": {
+      "senderEmail": "dan@finbank.example.com",
+      "senderDomain": "finbank.example.com",
+      "recipientEmail": "careers@finbank.example.com",
+      "recipientDomain": "finbank.example.com",
+      "referralEmailId": "email-def456",
+      "ccEmails": ["referrals@mentorconnect.com"],
+      "subject": "Referral for analyst position",
+      "timestamp": "2023-10-01T09:30:00Z"
+    },
+    "emailDomainVerified": false,
+    "rewardAmount": 0,
+    "paymentStatus": "pending"
+  }
+]
