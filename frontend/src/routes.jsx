@@ -1,8 +1,14 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks';
+
+// Admin Components
 import AdminLayout from './components/admin/AdminLayout';
-import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminDashboard from './pages/admin/adminDashboard';
+import SessionManagement from './pages/admin/sessionManagement';
+import ReferralManagement from './pages/admin/referralManagement';
+import UserManagement from './pages/admin/userManagement';
+import Analytics from './pages/admin/analytics';
 
 // Layouts
 import MainLayout from './layouts/MainLayout';
