@@ -70,11 +70,11 @@ services:
       context: .
       dockerfile: frontend/Dockerfile
       args:
-        - REACT_APP_API_URL=${REACT_APP_API_URL}
+        - REACT_APP_API_URL=/api  # Changed from ${REACT_APP_API_URL}
         - REACT_APP_STRIPE_PUBLIC_KEY=${REACT_APP_STRIPE_PUBLIC_KEY}
     restart: always
     ports:
-      - "3000:80"
+      - "3001:80"  # Changed from 3000 to avoid conflicts
     depends_on:
       - backend
     networks:
