@@ -1,0 +1,22 @@
+[
+  {
+    "_id": "ind-tech",
+    "name": "Technology",
+    "description": "Software and IT services"
+  },
+  {
+    "_id": "ind-fin",
+    "name": "Finance",
+    "description": "Banking and financial services"
+  },
+  {
+    "_id": "ind-health",
+    "name": "Healthcare",
+    "description": "Hospitals and medical services"
+  },
+  {
+    "_id": "ind-marketing",
+    "name": "Marketing",
+    "description": "Advertising and marketing"
+  }
+]

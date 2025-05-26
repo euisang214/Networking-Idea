@@ -1,0 +1,46 @@
+[
+  {
+    "_id": "comp-acme",
+    "name": "Acme Corp",
+    "industry": "ind-tech",
+    "website": "https://acme.example.com",
+    "size": "201-500",
+    "founded": 2010,
+    "headquarters": "San Francisco, CA",
+    "logo": "/logos/acme.png",
+    "description": "Leading provider of enterprise widgets"
+  },
+  {
+    "_id": "comp-finbank",
+    "name": "FinBank",
+    "industry": "ind-fin",
+    "website": "https://finbank.example.com",
+    "size": "1001-5000",
+    "founded": 1995,
+    "headquarters": "New York, NY",
+    "logo": "/logos/finbank.png",
+    "description": "Global financial services"
+  },
+  {
+    "_id": "comp-healthplus",
+    "name": "HealthPlus",
+    "industry": "ind-health",
+    "website": "https://healthplus.example.com",
+    "size": "501-1000",
+    "founded": 2005,
+    "headquarters": "Chicago, IL",
+    "logo": "/logos/healthplus.png",
+    "description": "Innovative healthcare solutions"
+  },
+  {
+    "_id": "comp-marketworks",
+    "name": "MarketWorks",
+    "industry": "ind-marketing",
+    "website": "https://marketworks.example.com",
+    "size": "51-200",
+    "founded": 2015,
+    "headquarters": "Austin, TX",
+    "logo": "/logos/marketworks.png",
+    "description": "Modern marketing agency"
+  }
+]

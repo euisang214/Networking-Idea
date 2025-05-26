@@ -6,12 +6,15 @@ services:
     restart: always
     volumes:
       - mongodb_data:/data/db
+      - ./seed.sh:/docker-entrypoint-initdb.d/seed.sh:ro
+      - ./mock-data:/docker-entrypoint-initdb.d/mock-data:ro
     ports:
       - "27017:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
       MONGO_INITDB_DATABASE: ${MONGO_DATABASE}
+      MOCK_INTEGRATIONS: ${MOCK_INTEGRATIONS}
     networks:
       - app-network
 

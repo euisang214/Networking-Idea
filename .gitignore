@@ -3,3 +3,4 @@ backend/node_modules/
 backend/logs/
 package-lock.json
 backend/package-lock.json
+coverage/

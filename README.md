@@ -59,6 +59,7 @@ access to specific roles (e.g. `candidate`, `professional`, `admin`).
    cp env-example.txt .env
    ```
 3. Edit `.env` with your own credentials for MongoDB, Stripe, SendGrid, Zoom, Google OAuth and other keys. These variables are used by both the backend and frontend services. Set `MOCK_INTEGRATIONS=true` if you want to run the app without contacting the real external services.
+   When this flag is enabled, MongoDB will automatically import the JSON files under `mock-data/` the first time the stack is started.
 4. **Option A: Docker Compose (recommended)**
    1. Ensure Docker is running.
    2. Start the stack (set `API_PORT` in `.env` if port 5000 is already in use):
