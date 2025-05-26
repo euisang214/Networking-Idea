@@ -3,7 +3,7 @@ version: '3.8'
 services:
   mongodb:
     image: mongo:4.4
-    restart: always
+    restart: unless-stopped
     volumes:
       - mongodb_data:/data/db
       - ./seed.sh:/docker-entrypoint-initdb.d/seed.sh:ro
@@ -15,6 +15,12 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
       MONGO_INITDB_DATABASE: ${MONGO_DATABASE}
       MOCK_INTEGRATIONS: ${MOCK_INTEGRATIONS}
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
     networks:
       - app-network
 
@@ -22,9 +28,10 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    restart: always
+    restart: unless-stopped
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_started
     ports:
       - "${API_PORT:-5000}:5000"
     volumes:
@@ -48,6 +55,13 @@ services:
       - FRONTEND_URL=${FRONTEND_URL}
       - PLATFORM_FEE_PERCENT=${PLATFORM_FEE_PERCENT}
       - REFERRAL_REWARD_AMOUNT=${REFERRAL_REWARD_AMOUNT}
+      - MOCK_INTEGRATIONS=${MOCK_INTEGRATIONS}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     networks:
       - app-network
 

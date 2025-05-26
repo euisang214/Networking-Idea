@@ -15,6 +15,6 @@ RUN npm install --silent && mv node_modules ../ \
 # RUN npm install --production --silent && mv node_modules ../
 
 COPY . .
-EXPOSE 5173
+EXPOSE 80
 USER node
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+CMD ["npm", "start"]
