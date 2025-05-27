@@ -74,7 +74,7 @@ services:
         - REACT_APP_STRIPE_PUBLIC_KEY=${REACT_APP_STRIPE_PUBLIC_KEY}
     restart: always
     ports:
-      - "3001:80"  # Changed from 3000 to avoid conflicts
+      - "3001"
     depends_on:
       - backend
     networks:

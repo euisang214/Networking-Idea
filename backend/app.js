@@ -49,7 +49,7 @@ app.use(errorHandler);
 // Set up Socket.io
 const io = socketIo(server, {
   cors: {
-    origin: config.app.env === 'production' ? false : ['http://localhost:3000'],
+    origin: config.app.env === 'production' ? false : ['http://localhost:3001'],
     methods: ['GET', 'POST'],
     credentials: true
   }
