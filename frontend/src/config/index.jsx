@@ -14,10 +14,10 @@
  * @returns {string | undefined}
  */
 function getEnv(name) {
-  if (typeof import !== 'undefined' && typeof import.meta !== 'undefined') {
+  if (typeof window !== 'undefined' && typeof window.meta !== 'undefined') {
     // Vite exposes env vars on import.meta.env
-    if (import.meta.env && Object.prototype.hasOwnProperty.call(import.meta.env, name)) {
-      return import.meta.env[name];
+    if (window.meta.env && Object.prototype.hasOwnProperty.call(window.meta.env, name)) {
+      return window.meta.env[name];
     }
   }
   return process.env[name];
