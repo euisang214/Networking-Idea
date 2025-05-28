@@ -74,7 +74,9 @@ services:
         - REACT_APP_STRIPE_PUBLIC_KEY=${REACT_APP_STRIPE_PUBLIC_KEY}
     restart: always
     ports:
-      - "3000:80"
+      - "${FRONTEND_PORT:-3000}:${FRONTEND_INTERNAL_PORT:-80}"
+    environment:
+      - FRONTEND_INTERNAL_PORT=${FRONTEND_INTERNAL_PORT}
     depends_on:
       - backend
     networks:
@@ -83,8 +85,8 @@ services:
   nginx:
     image: nginx:alpine
     ports:
-      - "80:80"
-      - "443:443"
+      - "${NGINX_PORT:-80}:80"
+      - "${NGINX_SSL_PORT:-443}:443"
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
       - ./certbot/conf:/etc/letsencrypt
