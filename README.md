@@ -62,11 +62,11 @@ access to specific roles (e.g. `candidate`, `professional`, `admin`).
    When this flag is enabled, MongoDB will automatically import the JSON files under `mock-data/` the first time the stack is started.
 4. **Option A: Docker Compose (recommended)**
    1. Ensure Docker is running.
-   2. Start the stack (set `API_PORT` in `.env` if port 5000 is already in use):
+   2. Start the stack (set `API_PORT` or `FRONTEND_PORT` in `.env` if the default ports are already in use):
       ```bash
       docker compose up --build
       ```
-   3. The frontend will be available at `http://localhost:3000` and the API at `http://localhost:${API_PORT:-5000}`.
+   3. The frontend will be available at `http://localhost:${FRONTEND_PORT:-3000}` and the API at `http://localhost:${API_PORT:-5000}`.
    4. When you're done, stop the stack:
       ```bash
       docker compose down
