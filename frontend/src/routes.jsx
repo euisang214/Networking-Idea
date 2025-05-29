@@ -18,7 +18,7 @@ import DashboardLayout from './layouts/DashboardLayout';
 // Public pages
 import Home from './pages/Home';
 import ProfessionalsPage from './pages/ProfessionalsPage';
-import ProfessionalDetailPage from './pages/ProfessionalDetailPage';
+import ProfessionalDetailPage from './pages/ProfessionalDetailsPage';
 
 // Auth pages
 import Login from './pages/auth/Login';
