@@ -101,4 +101,34 @@ Modal.propTypes = {
   showCloseButton: PropTypes.bool
 };
 
+export const ConfirmationModal = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+  onConfirm,
+  confirmText = 'Yes',
+  cancelText = 'No',
+  confirmVariant = 'danger',
+  isLoading = false
+}) => {
+  const footer = (
+    <div className="flex justify-end space-x-4">
+      <Button variant="outline" onClick={onClose} disabled={isLoading}>
+        {cancelText}
+      </Button>
+      <Button variant={confirmVariant} onClick={onConfirm} isLoading={isLoading}>
+        {confirmText}
+      </Button>
+    </div>
+  );
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title={title} footer={footer} size="sm">
+      {children}
+    </Modal>
+  );
+};
+
 export default Modal;
+
