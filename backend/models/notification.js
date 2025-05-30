@@ -27,9 +27,9 @@ const notificationSchema = new Schema({
       'accountUpdate',
       'systemAlert',
       'feedbackSubmitted',
-      'jobOfferReported', 
-      'referralBonusPaid',
-      'referralBonusProcessed'
+      'jobOfferReported',
+      'offerBonusPaid',
+      'offerBonusProcessed'
     ],
     required: true
   },

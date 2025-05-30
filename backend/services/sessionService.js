@@ -567,12 +567,12 @@ class SessionService {
         }
       }
 
-      // Show referral bonus potential to professional
+      // Show offer bonus potential to professional
       const NotificationService = require('./notificationService');
       await NotificationService.sendNotification(userId, 'feedbackSubmitted', {
         sessionId: session._id,
         candidateName: `${session.user.firstName} ${session.user.lastName}`,
-        referralBonusAmount: session.user.referralBonusAmount
+        offerBonusAmount: session.user.offerBonusAmount
       });
 
       logger.info(`Professional feedback added to session ${sessionId}`);

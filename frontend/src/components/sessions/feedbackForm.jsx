@@ -131,7 +131,7 @@ const FeedbackForm = ({ session, onFeedbackSubmitted }) => {
                 placeholder="Provide detailed feedback about the candidate's background, interests, and potential fit for roles at your company..."
               />
               <p className="text-xs text-gray-500 mt-1">
-                Your feedback helps the candidate improve and may unlock their referral bonus potential.
+                Your feedback helps the candidate improve and may unlock their offer bonus potential.
               </p>
             </div>
 

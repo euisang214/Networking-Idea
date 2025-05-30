@@ -43,7 +43,7 @@ const jobOfferSchema = new Schema({
     startDate: Date,
     salary: Number
   },
-  bonusAmount: {
+  offerBonusAmount: {
     type: Number,
     required: true
   },

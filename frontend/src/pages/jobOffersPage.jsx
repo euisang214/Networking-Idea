@@ -16,7 +16,7 @@ const JobOffersPage = () => {
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Job Offers</h1>
           <p className="text-lg text-gray-600 mt-2">
-            Track job offers and referral bonuses from your networking sessions.
+            Track job offers and offer bonuses from your networking sessions.
           </p>
         </div>
         

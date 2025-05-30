@@ -28,7 +28,7 @@ class UserService {
 
   async updateProfile(userId, updates) {
     const user = await this.getUserById(userId);
-    const fields = ['firstName', 'lastName', 'phoneNumber', 'profileImage', 'resume'];
+    const fields = ['firstName', 'lastName', 'phoneNumber', 'profileImage', 'resume', 'offerBonusAmount'];
     fields.forEach(f => {
       if (updates[f] !== undefined) user[f] = updates[f];
     });

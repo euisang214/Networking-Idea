@@ -21,7 +21,8 @@ const RegisterForm = () => {
       password: '',
       confirmPassword: '',
       userType: 'candidate', // Default user type
-      resume: null
+      resume: null,
+      offerBonusAmount: ''
     },
     handleRegister,
     validateRegister
@@ -60,6 +61,10 @@ const RegisterForm = () => {
     if (values.resume && values.resume.type && !["application/pdf","application/msword","application/vnd.openxmlformats-officedocument.wordprocessingml.document"].some(t => values.resume.type.includes(t))) {
       errors.resume = 'Resume must be a PDF or Word document';
     }
+
+    if (values.userType === 'candidate' && values.offerBonusAmount && isNaN(parseFloat(values.offerBonusAmount))) {
+      errors.offerBonusAmount = 'Offer bonus must be a number';
+    }
     
     return errors;
   }
@@ -86,7 +91,8 @@ const RegisterForm = () => {
         email: values.email,
         password: values.password,
         userType: values.userType,
-        resume: resumeData
+        resume: resumeData,
+        offerBonusAmount: values.offerBonusAmount ? parseFloat(values.offerBonusAmount) : 0
       });
       
       setRegisterSuccess(true);
@@ -185,6 +191,18 @@ const RegisterForm = () => {
           onChange={handleChange}
           error={errors.resume}
         />
+
+        {values.userType === 'candidate' && (
+          <Input
+            label="Offer Bonus Amount"
+            name="offerBonusAmount"
+            type="number"
+            value={values.offerBonusAmount}
+            onChange={handleChange}
+            error={errors.offerBonusAmount}
+            placeholder="50"
+          />
+        )}
         
         <div className="mt-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">

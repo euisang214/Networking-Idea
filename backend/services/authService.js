@@ -11,7 +11,7 @@ class AuthService {
   // Register a new user
   async register(userData) {
     try {
-      const { email, password, firstName, lastName, userType, resume, referralBonusAmount } = userData;
+      const { email, password, firstName, lastName, userType, resume, offerBonusAmount } = userData;
       
       // Check if email already exists
       const existingUser = await User.findOne({ email: email.toLowerCase() });
@@ -28,7 +28,7 @@ class AuthService {
         resume,
         userType: userType || 'candidate',
         emailVerificationToken: crypto.randomBytes(32).toString('hex'),
-        referralBonusAmount
+        offerBonusAmount
       });
       
       await user.save();
