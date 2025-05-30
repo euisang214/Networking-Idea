@@ -6,17 +6,30 @@ const EmailService = require('./emailService');
 const logger = require('../utils/logger');
 const GoogleService = require('./googleService');
 const config = require('../config');
+const { AuthorizationError } = require('../utils/errorTypes');
 
 class AuthService {
   // Register a new user
   async register(userData) {
     try {
-      const { email, password, firstName, lastName, userType, resume, offerBonusAmount } = userData;
+      const {
+        email,
+        password,
+        firstName,
+        lastName,
+        userType,
+        resume,
+        offerBonusAmount
+      } = userData;
       
       // Check if email already exists
       const existingUser = await User.findOne({ email: email.toLowerCase() });
       if (existingUser) {
         throw new Error('Email already in use');
+      }
+
+      if (resume && userType && userType !== 'candidate') {
+        throw new AuthorizationError('Only candidates can upload a resume');
       }
       
       // Create new user
