@@ -16,7 +16,7 @@ COPY . .
 # Change ownership
 RUN chown -R node:node /usr/src/app /usr/src/node_modules
 
-EXPOSE 80
+EXPOSE 3000
 USER node
 
 CMD ["npm", "start"]

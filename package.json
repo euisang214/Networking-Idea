@@ -52,7 +52,7 @@
   },
   "scripts": {
     "dev": "vite --port 3000",
-    "start": "vite --port 80 --host 0.0.0.0",
+    "start": "vite --port 3000 --host 0.0.0.0",
     "build": "vite build",
     "serve": "vite preview",
     "test": "jest --coverage",
