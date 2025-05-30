@@ -2,6 +2,8 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks';
 
+
+
 // Admin Components
 import AdminLayout from './components/admin/AdminLayout';
 import AdminDashboard from './pages/admin/adminDashboard';
@@ -35,6 +37,7 @@ import ProfilePage from './pages/ProfilePage';
 import SettingsPage from './pages/SettingsPage';
 import MessagesPage from './pages/MessagesPage';
 import NotificationsPage from './pages/NotificationsPage';
+import JobOffersPage from './pages/jobOffersPage';
 
 // Dashboard pages
 import DashboardHome from './pages/dashboard/DashboardHome';
@@ -82,6 +85,11 @@ const AppRoutes = () => {
         <Route path="referrals" element={
           <PrivateRoute>
             <ReferralHistoryPage />
+          </PrivateRoute>
+        } />
+        <Route path="job-offers" element={
+          <PrivateRoute>
+            <JobOffersPage />
           </PrivateRoute>
         } />
         <Route path="profile" element={

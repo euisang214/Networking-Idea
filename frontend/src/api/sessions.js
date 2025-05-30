@@ -88,17 +88,30 @@ const SessionsAPI = {
     ),
 
   /**
-   * Create feedback for a session
+   * Create candidate feedback for a session
    * @param {string} sessionId - Session identifier
    * @param {number} rating - Star rating
    * @param {string} comment - Feedback text
    * @returns {Promise<Object>} Updated session
    */
-  createFeedback: (sessionId, rating, comment) =>
+  createCandidateFeedback: (sessionId, rating, comment) =>
     handleRequest(
-      api.post(`/sessions/${sessionId}/feedback`, {
+      api.post(`/sessions/${sessionId}/feedback/candidate`, {
         rating,
         comment,
+      })
+    ),
+
+  /**
+   * Create professional feedback for a session
+   * @param {string} sessionId - Session identifier
+   * @param {string} feedback - Feedback text
+   * @returns {Promise<Object>} Updated session
+   */
+  createProfessionalFeedback: (sessionId, feedback) =>
+    handleRequest(
+      api.post(`/sessions/${sessionId}/feedback/professional`, {
+        feedback,
       })
     ),
 

@@ -304,37 +304,53 @@ const SessionController = {
     }
   },
 
-  // Add feedback to a session
-  addFeedback: async (req, res, next) => {
-    try {
-      const { sessionId } = req.params;
-      const { rating, comment } = req.body;
-      const userId = req.user.id;
+  // Add candidate feedback (rating) to a session
+addCandidateFeedback: async (req, res, next) => {
+  try {
+    const { sessionId } = req.params;
+    const { rating, comment } = req.body;
+    const userId = req.user.id;
 
-      // Validate required fields
-      if (!rating) {
-        throw new ValidationError("Rating is required");
-      }
-
-      // Add feedback
-      const session = await SessionService.addFeedback(
-        sessionId,
-        userId,
-        rating,
-        comment,
-      );
-
-      return responseFormatter.success(
-        res,
-        {
-          session,
-        },
-        "Feedback added successfully",
-      );
-    } catch (error) {
-      next(error);
+    if (!rating) {
+      throw new ValidationError("Rating is required");
     }
-  },
+
+    const session = await SessionService.addCandidateFeedback(
+      sessionId,
+      userId,
+      rating,
+      comment
+    );
+
+    return responseFormatter.success(res, { session }, "Feedback added successfully");
+  } catch (error) {
+    next(error);
+  }
+},
+
+// Add professional feedback (text) to a session
+addProfessionalFeedback: async (req, res, next) => {
+  try {
+    const { sessionId } = req.params;
+    const { rating, feedback } = req.body;
+    const userId = req.user.id;
+
+    if (!feedback || feedback.trim().length === 0) {
+      throw new ValidationError("Feedback text is required");
+    }
+
+    const session = await SessionService.addProfessionalFeedback(
+      sessionId,
+      userId,
+      rating,
+      feedback
+    );
+
+    return responseFormatter.success(res, { session }, "Feedback submitted successfully");
+  } catch (error) {
+    next(error);
+  }
+},
 
   // Check professional availability for a time slot
   checkAvailability: async (req, res, next) => {

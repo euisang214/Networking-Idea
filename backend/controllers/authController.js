@@ -8,7 +8,7 @@ const AuthController = {
   // Register a new user
   register: async (req, res, next) => {
     try {
-      const { email, password, firstName, lastName, userType } = req.body;
+      const { email, password, firstName, lastName, userType, referralBonusAmount } = req.body;
       
       // Validate required fields
       if (!email || !password || !firstName || !lastName) {
@@ -20,7 +20,8 @@ const AuthController = {
         password,
         firstName,
         lastName,
-        userType
+        userType,
+        referralBonusAmount: referralBonusAmount || 0,
       });
       
       return responseFormatter.created(res, {

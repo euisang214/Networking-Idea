@@ -5,6 +5,8 @@ import SessionsAPI from "../../api/sessions";
 import Card from "../common/Card";
 import Button from "../common/Button";
 import Spinner from "../common/Spinner";
+import FeedbackForm from './feedbackForm';
+import JobOfferForm from '../jobOffers/jobOfferForm';
 
 const SessionDetail = () => {
   const { sessionId } = useParams();
@@ -441,6 +443,21 @@ const SessionDetail = () => {
           </Card>
         </div>
       </div>
+      {/* Feedback Form */}
+      {session && (
+        <FeedbackForm 
+          session={session} 
+          onFeedbackSubmitted={() => window.location.reload()} 
+        />
+      )}
+
+      {/* Job Offer Form */}
+      {session && (
+        <JobOfferForm 
+          session={session} 
+          onOfferReported={() => window.location.reload()} 
+        />
+      )}
     </div>
   );
 };

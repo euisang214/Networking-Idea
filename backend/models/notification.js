@@ -25,7 +25,11 @@ const notificationSchema = new Schema({
       'referralVerified', 
       'referralRewarded',
       'accountUpdate',
-      'systemAlert'
+      'systemAlert',
+      'feedbackSubmitted',
+      'jobOfferReported', 
+      'referralBonusPaid',
+      'referralBonusProcessed'
     ],
     required: true
   },

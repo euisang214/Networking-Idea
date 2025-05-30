@@ -495,8 +495,8 @@ class SessionService {
     }
   }
 
-  // Add feedback to a session
-  async addFeedback(sessionId, userId, rating, comment) {
+  // Add candidate feedback to a session
+  async addCandidateFeedback(sessionId, userId, rating, comment) {
     try {
       const session = await Session.findById(sessionId);
 
@@ -509,26 +509,77 @@ class SessionService {
         throw new Error("Unauthorized to add feedback to this session");
       }
 
-      session.feedback = {
-        rating,
-        comment,
-        providedAt: new Date(),
-      };
+      if (!session.feedback) {
+        session.feedback = {};
+      }
+
+      session.feedback.candidateRating = rating;
+      session.feedback.candidateComment = comment;
+      session.feedback.candidateProvidedAt = new Date();
 
       await session.save();
 
       // Update professional's average rating
-      const professional = await ProfessionalProfile.findById(
-        session.professional,
-      );
+      const professional = await ProfessionalProfile.findById(session.professional);
       await professional.updateStatistics();
 
-      logger.info(`Feedback added to session ${sessionId}`);
-
+      logger.info(`Candidate feedback added to session ${sessionId}`);
       return session;
     } catch (error) {
-      logger.error(`Failed to add feedback: ${error.message}`);
-      throw new Error(`Failed to add feedback: ${error.message}`);
+      logger.error(`Failed to add candidate feedback: ${error.message}`);
+      throw new Error(`Failed to add candidate feedback: ${error.message}`);
+    }
+  }
+
+  // Add professional feedback to a session
+  async addProfessionalFeedback(sessionId, userId, feedback) {
+    try {
+      const session = await Session.findById(sessionId)
+        .populate('professional')
+        .populate('user');
+
+      if (!session) {
+        throw new Error("Session not found");
+      }
+
+      // Verify user is authorized to add feedback
+      if (session.professional.user.toString() !== userId) {
+        throw new Error("Unauthorized to add feedback to this session");
+      }
+
+      if (!session.feedback) {
+        session.feedback = {};
+      }
+
+      session.feedback.professionalFeedback = feedback;
+      session.feedback.professionalProvidedAt = new Date();
+
+      await session.save();
+
+      // **CRITICAL: Release payment to professional after feedback submission**
+      if (session.paymentStatus === 'paid') {
+        try {
+          const PaymentService = require('./paymentService');
+          await PaymentService.releaseSessionPayment(sessionId);
+          logger.info(`Payment released for session ${sessionId} after professional feedback`);
+        } catch (paymentError) {
+          logger.error(`Failed to release payment after feedback: ${paymentError.message}`);
+        }
+      }
+
+      // Show referral bonus potential to professional
+      const NotificationService = require('./notificationService');
+      await NotificationService.sendNotification(userId, 'feedbackSubmitted', {
+        sessionId: session._id,
+        candidateName: `${session.user.firstName} ${session.user.lastName}`,
+        referralBonusAmount: session.user.referralBonusAmount
+      });
+
+      logger.info(`Professional feedback added to session ${sessionId}`);
+      return session;
+    } catch (error) {
+      logger.error(`Failed to add professional feedback: ${error.message}`);
+      throw new Error(`Failed to add professional feedback: ${error.message}`);
     }
   }
 }

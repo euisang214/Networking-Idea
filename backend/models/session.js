@@ -59,13 +59,23 @@ const sessionSchema = new Schema({
     type: String
   },
   feedback: {
-    rating: {
+    // Candidate feedback about professional (rating)
+    candidateRating: {
       type: Number,
       min: 1,
       max: 5
     },
-    comment: String,
-    providedAt: Date
+    candidateComment: String,
+    candidateProvidedAt: Date,
+    
+    // Professional feedback about candidate (text & rating)
+    professionalFeedback: String,
+    professionalProvidedAt: Date,
+    professionalRating: {
+      type: Number,
+      min: 1,
+      max: 5
+    },
   },
   createdAt: {
     type: Date,

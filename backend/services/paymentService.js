@@ -164,7 +164,7 @@ class PaymentService {
     }
   }
 
-  // Process referral reward
+  // Process referral reward (obsolete?)
   async processReferralPayment(referralId) {
     try {
       const referral = await Referral.findById(referralId)
@@ -239,6 +239,67 @@ class PaymentService {
       throw new Error(`Referral payment failed: ${error.message}`);
     }
   }
+
+  // Process referral bonus payment
+async processReferralBonus(offerId) {
+  try {
+    const JobOffer = require('../models/jobOffer');
+    const jobOffer = await JobOffer.findById(offerId)
+      .populate('candidate')
+      .populate('professional')
+      .populate('session');
+
+    if (!jobOffer) {
+      throw new Error('Job offer not found');
+    }
+
+    if (jobOffer.status !== 'confirmed') {
+      throw new Error('Cannot pay unconfirmed job offer');
+    }
+
+    if (jobOffer.status === 'paid') {
+      logger.warn(`Referral bonus ${offerId} already paid`);
+      return { success: true, alreadyPaid: true, offerId };
+    }
+
+    const professional = jobOffer.professional;
+
+    // Process payout via Stripe
+    const transfer = await stripe.transfers.create({
+      amount: jobOffer.bonusAmount * 100, // in cents
+      currency: 'usd',
+      destination: professional.stripeConnectedAccountId,
+      description: `Referral bonus for successful hire: ${jobOffer.candidate.firstName} ${jobOffer.candidate.lastName}`,
+      metadata: {
+        offerId: jobOffer._id.toString(),
+        type: 'referral_bonus',
+        candidateId: jobOffer.candidate._id.toString(),
+        professionalId: professional._id.toString()
+      }
+    }, {
+      idempotencyKey: `bonus-${jobOffer._id.toString()}`
+    });
+
+    // Send notifications
+    await NotificationService.sendNotification(professional.user, 'referralBonusPaid', {
+      offerId: jobOffer._id,
+      amount: jobOffer.bonusAmount,
+      candidateEmail: jobOffer.candidate.email
+    });
+
+    logger.info(`Referral bonus payment processed for offer ${offerId}: ${transfer.id}`);
+
+    return {
+      success: true,
+      transferId: transfer.id,
+      amount: jobOffer.bonusAmount,
+      offerId: jobOffer._id
+    };
+  } catch (error) {
+    logger.error(`Referral bonus payment failed: ${error.message}`);
+    throw new Error(`Referral bonus payment failed: ${error.message}`);
+  }
+}
 
   // Create or retrieve Stripe checkout session for subscription
   async createCheckoutSession(userId, planType) {
