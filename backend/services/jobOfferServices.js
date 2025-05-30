@@ -42,7 +42,7 @@ class JobOfferService {
         company: session.professional.company,
         session: sessionId,
         reportedBy,
-        bonusAmount: session.user.referralBonusAmount,
+        offerBonusAmount: session.user.offerBonusAmount,
         offerDetails
       });
 
@@ -56,7 +56,7 @@ class JobOfferService {
       await NotificationService.sendNotification(otherUserId, 'jobOfferReported', {
         offerId: jobOffer._id,
         reportedBy,
-        bonusAmount: jobOffer.bonusAmount
+        offerBonusAmount: jobOffer.offerBonusAmount
       });
 
       logger.info(`Job offer reported: ${jobOffer._id}`);
@@ -97,8 +97,8 @@ class JobOfferService {
 
       await jobOffer.save();
 
-      // Process referral bonus payment
-      await this.processReferralBonus(jobOffer._id);
+      // Process offer bonus payment
+      await this.processOfferBonus(jobOffer._id);
 
       logger.info(`Job offer confirmed: ${jobOffer._id}`);
       return jobOffer;
@@ -108,7 +108,7 @@ class JobOfferService {
     }
   }
 
-  async processReferralBonus(offerId) {
+  async processOfferBonus(offerId) {
     try {
       const jobOffer = await JobOffer.findById(offerId)
         .populate('candidate')
@@ -120,7 +120,7 @@ class JobOfferService {
       }
 
       // Process payment through PaymentService
-      const paymentResult = await PaymentService.processReferralBonus(jobOffer._id);
+      const paymentResult = await PaymentService.processOfferBonus(jobOffer._id);
 
       jobOffer.status = 'paid';
       jobOffer.paymentId = paymentResult.transferId;
@@ -128,19 +128,19 @@ class JobOfferService {
       await jobOffer.save();
 
       // Send notifications
-      await NotificationService.sendNotification(jobOffer.professional.user, 'referralBonusPaid', {
-        amount: jobOffer.bonusAmount,
+      await NotificationService.sendNotification(jobOffer.professional.user, 'offerBonusPaid', {
+        amount: jobOffer.offerBonusAmount,
         candidateName: `${jobOffer.candidate.firstName} ${jobOffer.candidate.lastName}`
       });
 
-      await NotificationService.sendNotification(jobOffer.candidate._id, 'referralBonusProcessed', {
-        amount: jobOffer.bonusAmount,
+      await NotificationService.sendNotification(jobOffer.candidate._id, 'offerBonusProcessed', {
+        amount: jobOffer.offerBonusAmount,
         professionalName: `${jobOffer.professional.user.firstName} ${jobOffer.professional.user.lastName}`
       });
 
       return paymentResult;
     } catch (error) {
-      logger.error(`Failed to process referral bonus: ${error.message}`);
+      logger.error(`Failed to process offer bonus: ${error.message}`);
       throw error;
     }
   }

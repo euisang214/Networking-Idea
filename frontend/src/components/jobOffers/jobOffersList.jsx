@@ -121,7 +121,7 @@ const JobOffersList = () => {
 
               <div className="mt-3 flex items-center space-x-4">
                 <div className="text-lg font-semibold text-green-600">
-                  Bonus: ${offer.bonusAmount.toFixed(2)}
+                  Bonus: ${offer.offerBonusAmount.toFixed(2)}
                 </div>
                 {offer.offerDetails?.salary && (
                   <div className="text-sm text-gray-600">

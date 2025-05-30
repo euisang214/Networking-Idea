@@ -59,11 +59,18 @@ router.post(
   SessionController.processPayment
 );
 
-// Add feedback to session
+// Candidate feedback
 router.post(
-  '/:sessionId/feedback',
+  '/:sessionId/feedback/candidate',
   validate([validators.sessionId, validators.rating]),
-  SessionController.addFeedback
+  SessionController.addCandidateFeedback
+);
+
+// Professional feedback
+router.post(
+  '/:sessionId/feedback/professional',
+  validate(validators.sessionId),
+  SessionController.addProfessionalFeedback
 );
 
 // Check professional availability

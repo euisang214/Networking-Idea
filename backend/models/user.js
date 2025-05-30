@@ -42,10 +42,10 @@ const userSchema = new Schema({
     type: Boolean,
     default: false
   },
-  referralBonusAmount: {
-  type: Number,
-  default: 0,
-  min: 0
+  offerBonusAmount: {
+    type: Number,
+    default: 0,
+    min: 0
   },
   emailVerificationToken: String,
   passwordResetToken: String,

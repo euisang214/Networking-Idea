@@ -240,8 +240,8 @@ class PaymentService {
     }
   }
 
-  // Process referral bonus payment
-async processReferralBonus(offerId) {
+  // Process offer bonus payment
+async processOfferBonus(offerId) {
   try {
     const JobOffer = require('../models/jobOffer');
     const jobOffer = await JobOffer.findById(offerId)
@@ -258,7 +258,7 @@ async processReferralBonus(offerId) {
     }
 
     if (jobOffer.status === 'paid') {
-      logger.warn(`Referral bonus ${offerId} already paid`);
+      logger.warn(`Offer bonus ${offerId} already paid`);
       return { success: true, alreadyPaid: true, offerId };
     }
 
@@ -266,13 +266,13 @@ async processReferralBonus(offerId) {
 
     // Process payout via Stripe
     const transfer = await stripe.transfers.create({
-      amount: jobOffer.bonusAmount * 100, // in cents
+      amount: jobOffer.offerBonusAmount * 100, // in cents
       currency: 'usd',
       destination: professional.stripeConnectedAccountId,
-      description: `Referral bonus for successful hire: ${jobOffer.candidate.firstName} ${jobOffer.candidate.lastName}`,
+      description: `Offer bonus for successful hire: ${jobOffer.candidate.firstName} ${jobOffer.candidate.lastName}`,
       metadata: {
         offerId: jobOffer._id.toString(),
-        type: 'referral_bonus',
+        type: 'offer_bonus',
         candidateId: jobOffer.candidate._id.toString(),
         professionalId: professional._id.toString()
       }
@@ -281,23 +281,23 @@ async processReferralBonus(offerId) {
     });
 
     // Send notifications
-    await NotificationService.sendNotification(professional.user, 'referralBonusPaid', {
+    await NotificationService.sendNotification(professional.user, 'offerBonusPaid', {
       offerId: jobOffer._id,
-      amount: jobOffer.bonusAmount,
+      amount: jobOffer.offerBonusAmount,
       candidateEmail: jobOffer.candidate.email
     });
 
-    logger.info(`Referral bonus payment processed for offer ${offerId}: ${transfer.id}`);
+    logger.info(`Offer bonus payment processed for offer ${offerId}: ${transfer.id}`);
 
     return {
       success: true,
       transferId: transfer.id,
-      amount: jobOffer.bonusAmount,
+      amount: jobOffer.offerBonusAmount,
       offerId: jobOffer._id
     };
   } catch (error) {
-    logger.error(`Referral bonus payment failed: ${error.message}`);
-    throw new Error(`Referral bonus payment failed: ${error.message}`);
+    logger.error(`Offer bonus payment failed: ${error.message}`);
+    throw new Error(`Offer bonus payment failed: ${error.message}`);
   }
 }
 

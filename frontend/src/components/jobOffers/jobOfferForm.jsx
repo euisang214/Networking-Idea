@@ -67,13 +67,13 @@ const JobOfferForm = ({ session, onOfferReported }) => {
             </div>
             <div className="ml-3">
               <h3 className="text-sm font-medium text-blue-800">
-                Referral Bonus: ${session.user.referralBonusAmount?.toFixed(2) || '0.00'}
+                Offer Bonus: ${session.user.offerBonusAmount?.toFixed(2) || '0.00'}
               </h3>
               <div className="mt-2 text-sm text-blue-700">
                 <p>
                   {isCandidate 
                     ? 'You committed to paying this amount to the first professional at this company who helped you network.'
-                    : 'This is the referral bonus you could earn if this hire is confirmed.'
+                    : 'This is the offer bonus you could earn if this hire is confirmed.'
                   }
                 </p>
               </div>
@@ -121,7 +121,7 @@ const JobOfferForm = ({ session, onOfferReported }) => {
                 </h3>
                 <div className="mt-2 text-sm text-amber-700">
                   <p>
-                    The other party will need to confirm this job offer before any referral bonus is processed.
+                    The other party will need to confirm this job offer before any offer bonus is processed.
                   </p>
                 </div>
               </div>
