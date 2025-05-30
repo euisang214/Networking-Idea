@@ -28,6 +28,9 @@ class UserService {
 
   async updateProfile(userId, updates) {
     const user = await this.getUserById(userId);
+    if (updates.resume !== undefined && user.userType !== 'candidate') {
+      throw new AuthorizationError('Only candidates can upload a resume');
+    }
     const fields = ['firstName', 'lastName', 'phoneNumber', 'profileImage', 'resume', 'offerBonusAmount'];
     fields.forEach(f => {
       if (updates[f] !== undefined) user[f] = updates[f];

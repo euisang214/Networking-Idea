@@ -8,7 +8,15 @@ const AuthController = {
   // Register a new user
   register: async (req, res, next) => {
     try {
-      const { email, password, firstName, lastName, userType, offerBonusAmount } = req.body;
+      const {
+        email,
+        password,
+        firstName,
+        lastName,
+        userType,
+        resume,
+        offerBonusAmount
+      } = req.body;
       
       // Validate required fields
       if (!email || !password || !firstName || !lastName) {
@@ -21,6 +29,7 @@ const AuthController = {
         firstName,
         lastName,
         userType,
+        resume,
         offerBonusAmount: offerBonusAmount || 0,
       });
       

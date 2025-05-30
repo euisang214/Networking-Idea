@@ -20,7 +20,7 @@ const RegisterForm = () => {
       email: '',
       password: '',
       confirmPassword: '',
-      userType: 'candidate', // Default user type
+      userType: '',
       resume: null,
       offerBonusAmount: ''
     },
@@ -58,6 +58,10 @@ const RegisterForm = () => {
       errors.confirmPassword = 'Passwords do not match';
     }
  
+    if (!values.userType) {
+      errors.userType = 'Please select a user type';
+    }
+
     if (values.resume && values.resume.type && !["application/pdf","application/msword","application/vnd.openxmlformats-officedocument.wordprocessingml.document"].some(t => values.resume.type.includes(t))) {
       errors.resume = 'Resume must be a PDF or Word document';
     }
@@ -184,13 +188,6 @@ const RegisterForm = () => {
           required
         />
 
-        <FileInput
-          label="Upload Resume (PDF or Word doc)"
-          name="resume"
-          accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-          onChange={handleChange}
-          error={errors.resume}
-        />
 
         {values.userType === 'candidate' && (
           <Input
@@ -203,7 +200,7 @@ const RegisterForm = () => {
             placeholder="50"
           />
         )}
-        
+
         <div className="mt-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">
             I am registering as:
@@ -234,7 +231,17 @@ const RegisterForm = () => {
             </label>
           </div>
         </div>
-        
+
+        {values.userType === 'candidate' && (
+          <FileInput
+            label="Upload Resume (PDF or Word doc)"
+            name="resume"
+            accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            onChange={handleChange}
+            error={errors.resume}
+          />
+        )}
+
         <div className="mt-4 text-sm text-gray-600">
           By creating an account, you agree to our{' '}
           <Link to="/terms" className="text-blue-600 hover:text-blue-500">
