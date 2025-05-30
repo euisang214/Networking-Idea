@@ -19,18 +19,6 @@ class MockEmailService {
     return this.extractDomain(a) === this.extractDomain(b);
   }
 
-  parseReferralEmail(data) {
-    logger.debug('Mock parseReferralEmail', data);
-    return {
-      senderEmail: data.from,
-      recipientEmail: data.to,
-      ccEmails: [],
-      referralEmailId: 'ref_mock',
-      timestamp: new Date(),
-      isPlatformCCd: true,
-      domainsMatch: true
-    };
-  }
 
   async sendSessionConfirmation() { return true; }
   async sendPaymentConfirmation() { return true; }

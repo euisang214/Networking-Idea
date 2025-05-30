@@ -1,4 +1,4 @@
-const JobOfferService = require('../services/jobOfferService');
+const JobOfferService = require('../services/jobOfferServices');
 const responseFormatter = require('../utils/responseFormatter');
 const { ValidationError } = require('../utils/errorTypes');
 
