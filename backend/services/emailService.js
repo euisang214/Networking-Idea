@@ -92,67 +92,12 @@ if (config.app.mockIntegrations) {
     validateDomainMatch(senderEmail, recipientEmail) {
       const senderDomain = this.extractDomain(senderEmail);
       const recipientDomain = this.extractDomain(recipientEmail);
-      
+
       if (!senderDomain || !recipientDomain) {
         return false;
       }
-      
-      return senderDomain === recipientDomain;
-    }
 
-    // Parse an inbound email to extract information for referral verification
-    parseReferralEmail(emailData) {
-      try {
-        const senderEmail = this.extractAddress(emailData.from?.email || emailData.from);
-        const recipientEmail = this.extractAddress(emailData.to?.email || emailData.to);
-        let ccEmails = [];
-        if (Array.isArray(emailData.cc)) {
-          ccEmails = emailData.cc
-            .map(cc => this.extractAddress(cc.email || cc))
-            .filter(Boolean);
-        } else if (typeof emailData.cc === 'string') {
-          ccEmails = emailData.cc
-            .split(',')
-            .map(e => this.extractAddress(e))
-            .filter(Boolean);
-        }
-        
-        // Verify platform email is CC'd
-        const isPlatformCCd = ccEmails.some(email => 
-          email.toLowerCase() === this.platformEmail.toLowerCase()
-        );
-        
-        if (!isPlatformCCd) {
-          logger.info(`Platform email ${this.platformEmail} not CC'd in referral email`);
-          return null;
-        }
-        
-        // Extract domains and check match
-        const senderDomain = this.extractDomain(senderEmail);
-        const recipientDomain = this.extractDomain(recipientEmail);
-        const domainsMatch = senderDomain === recipientDomain;
-        
-        if (!domainsMatch) {
-          logger.info(`Domain mismatch in referral email: ${senderDomain} vs ${recipientDomain}`);
-        }
-        
-        return {
-          senderEmail,
-          senderDomain,
-          recipientEmail,
-          recipientDomain,
-          ccEmails,
-          subject: emailData.subject,
-          body: emailData.text || emailData.html,
-          referralEmailId: emailData.messageId || `ref_${Date.now()}`,
-          timestamp: new Date(),
-          isPlatformCCd,
-          domainsMatch
-        };
-      } catch (error) {
-        logger.error(`Error parsing referral email: ${error.message}`);
-        return null;
-      }
+      return senderDomain === recipientDomain;
     }
 
     // Send session confirmation emails

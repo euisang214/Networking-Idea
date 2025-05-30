@@ -73,34 +73,6 @@ referralSchema.index({ status: 1, emailDomainVerified: 1 });
 referralSchema.index({ professional: 1, status: 1, payoutDate: -1 });
 
 // Methods
-referralSchema.methods.verifyEmailDomains = function() {
-  if (this.emailDetails && 
-      this.emailDetails.senderDomain && 
-      this.emailDetails.recipientDomain && 
-      this.emailDetails.senderDomain === this.emailDetails.recipientDomain) {
-    this.emailDomainVerified = true;
-    this.status = 'verified';
-    this.verificationDetails = {
-      verifiedAt: new Date(),
-      verificationMethod: 'domain-match',
-      verifiedBy: null // System verification
-    };
-    return this.save();
-  }
-  return Promise.reject(new Error('Email domains do not match'));
-};
-
-referralSchema.methods.processReward = function(amount) {
-  if (!this.emailDomainVerified || this.status !== 'verified') {
-    return Promise.reject(new Error('Cannot reward unverified referral'));
-  }
-  
-  this.rewardAmount = amount;
-  this.status = 'rewarded';
-  this.paymentStatus = 'processing';
-  
-  return this.save();
-};
 
 const Referral = mongoose.model('Referral', referralSchema);
 
