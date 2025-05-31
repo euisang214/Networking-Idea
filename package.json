@@ -22,7 +22,8 @@
     "react-query": "^3.39.3",
     "react-router-dom": "^6.13.0",
     "yup": "^1.2.0",
-    "zustand": "^4.3.8"
+    "zustand": "^4.3.8",
+    "web-vitals": "^2.1.4"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
