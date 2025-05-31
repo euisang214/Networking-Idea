@@ -30,8 +30,8 @@ function getEnv(name) {
  */
 function loadConfig() {
   // Check if running in Docker by looking for common Docker environment variables
-  const isDocker = process.env.REACT_APP_DOCKER === 'true' || 
-                   window.location.hostname === 'localhost' && window.location.port === '80';
+  const isDocker = process.env.REACT_APP_DOCKER === 'true' ||
+                   (window.location.hostname === 'localhost' && (!window.location.port || window.location.port === '80'));
   
   const config = {
     apiUrl: getEnv('REACT_APP_API_URL') || (isDocker ? '/api' : 'http://localhost:8000/api'),

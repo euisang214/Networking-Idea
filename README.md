@@ -66,7 +66,7 @@ access to specific roles (e.g. `candidate`, `professional`, `admin`).
       ```bash
       docker compose up --build
       ```
-   3. The frontend will be available at `http://localhost:3000` and the API at `http://localhost:${API_PORT:-5000}`.
+   3. Open `http://localhost:3000` in your browser. The React app will talk to the API at `http://localhost:${API_PORT:-8000}`.
    4. When you're done, stop the stack:
       ```bash
       docker compose down
