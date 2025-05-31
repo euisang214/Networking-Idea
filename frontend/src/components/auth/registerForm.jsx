@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from '../../hooks';
 import AuthAPI from '../../api/auth';
-import Input from '../../common/input';
-import FileInput from '../../common/fileInput';
-import Button from '../../common/button';
+import Input from '../common/input';
+import FileInput from '../common/fileInput';
+import Button from '../common/button';
 
 const RegisterForm = () => {
   const navigate = useNavigate();

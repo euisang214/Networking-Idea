@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
-import Button from '../../common/button';
+import Button from '../common/button';
 
 const ProfessionalCard = ({ professional }) => {
   // Format hourly rate as currency

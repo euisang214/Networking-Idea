@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from '../../hooks';
 import AuthAPI from '../../api/auth';
-import Input from '../../common/input';
-import Button from '../../common/button';
+import Input from '../common/input';
+import Button from '../common/button';
 
 const ForgotPasswordForm = () => {
   const [isLoading, setIsLoading] = useState(false);
