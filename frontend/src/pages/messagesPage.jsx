@@ -16,42 +16,44 @@ const MessagesPage = () => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
 
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        const conversationsData = await MessagesAPI.getConversations();
+        setConversations(conversationsData);
+        if (conversationsData.length > 0 && !selectedConversation) {
+          setSelectedConversation(conversationsData[0]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch conversations:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchConversations();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    const fetchMessages = async (userId) => {
+      try {
+        const messagesData = await MessagesAPI.getConversation(userId);
+        setMessages(messagesData.reverse());
+      } catch (error) {
+        console.error('Failed to fetch messages:', error);
+      }
+    };
+
+    if (!user || !selectedConversation) return;
+
+    fetchMessages(selectedConversation.user._id);
+  }, [user, selectedConversation]);
+
   if (!user) {
     return <Navigate to="/login" />;
   }
-
-  useEffect(() => {
-    fetchConversations();
-  }, []);
-
-  useEffect(() => {
-    if (selectedConversation) {
-      fetchMessages(selectedConversation.user._id);
-    }
-  }, [selectedConversation]);
-
-  const fetchConversations = async () => {
-    try {
-      const conversationsData = await MessagesAPI.getConversations();
-      setConversations(conversationsData);
-      if (conversationsData.length > 0 && !selectedConversation) {
-        setSelectedConversation(conversationsData[0]);
-      }
-    } catch (error) {
-      console.error('Failed to fetch conversations:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchMessages = async (userId) => {
-    try {
-      const messagesData = await MessagesAPI.getConversation(userId);
-      setMessages(messagesData.reverse()); // Reverse to show newest at bottom
-    } catch (error) {
-      console.error('Failed to fetch messages:', error);
-    }
-  };
 
   const handleSendMessage = async (e) => {
     e.preventDefault();

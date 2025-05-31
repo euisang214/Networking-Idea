@@ -6,7 +6,6 @@ import ProfessionalsAPI from '../api/professionals';
 import Card from '../components/common/card';
 import Button from '../components/common/button';
 import Input from '../components/common/input';
-import Spinner from '../components/common/spinner';
 import { useForm } from '../hooks/useForm';
 
 const ProfilePage = () => {
@@ -14,10 +13,6 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(false);
   const [professionalProfile, setProfessionalProfile] = useState(null);
   const [message, setMessage] = useState('');
-
-  if (!user) {
-    return <Navigate to="/login" />;
-  }
 
   const validateForm = (values) => {
     const errors = {};
@@ -46,29 +41,34 @@ const ProfilePage = () => {
 
   const { values, errors, touched, handleChange, handleBlur, handleSubmit: submitForm } = useForm(
     {
-      firstName: user.firstName || '',
-      lastName: user.lastName || '',
-      email: user.email || '',
-      phoneNumber: user.phoneNumber || '',
-      offerBonusAmount: user.offerBonusAmount || 0
+      firstName: user?.firstName || '',
+      lastName: user?.lastName || '',
+      email: user?.email || '',
+      phoneNumber: user?.phoneNumber || '',
+      offerBonusAmount: user?.offerBonusAmount || 0
     },
     handleSubmit,
     validateForm
   );
 
   useEffect(() => {
+    if (!user || user.userType !== 'professional') return;
+
     const fetchProfessionalProfile = async () => {
-      if (user.userType === 'professional') {
-        try {
-          const profile = await ProfessionalsAPI.getOwnProfile();
-          setProfessionalProfile(profile);
-        } catch (error) {
-          console.log('No professional profile found');
-        }
+      try {
+        const profile = await ProfessionalsAPI.getOwnProfile();
+        setProfessionalProfile(profile);
+      } catch (error) {
+        console.log('No professional profile found');
       }
     };
+
     fetchProfessionalProfile();
-  }, [user.userType]);
+  }, [user]);
+
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
 
   return (
     <div className="max-w-4xl mx-auto">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth, useNotifications } from '../hooks';
-import { Navigate, Link } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import Card from '../components/common/card';
 import Button from '../components/common/button';
 import Spinner from '../components/common/spinner';
@@ -17,13 +17,15 @@ const NotificationsPage = () => {
   } = useNotifications();
   const [actionLoading, setActionLoading] = useState({});
 
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+    }
+  }, [user, fetchNotifications]);
+
   if (!user) {
     return <Navigate to="/login" />;
   }
-
-  useEffect(() => {
-    fetchNotifications();
-  }, []);
 
   const handleMarkAsRead = async (notificationId) => {
     try {
