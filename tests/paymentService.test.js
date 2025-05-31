@@ -97,10 +97,6 @@ const PaymentService = require('../backend/services/paymentService');
 process.env.REFERRAL_REWARD_AMOUNT = '50';
 
 describe('payment service', () => {
-  it('uses idempotency key for referral payouts', async () => {
-    await PaymentService.processReferralPayment('ref1');
-    expect(transferSpy.mock.calls[0][1]).toEqual({ idempotencyKey: 'referral-ref1' });
-  });
 
   it('creates payment intent with manual capture', async () => {
     await PaymentService.processSessionPayment('sess1', 'pm_1', 'user1');

@@ -8,7 +8,7 @@ const chain = {
   exec: vi.fn(() => Promise.resolve(['pro']))
 };
 
-vi.mock('../backend/models/professionalProfile', () => ({
+vi.mock('../backend/models/professionalProfile.js', () => ({
   find: vi.fn(() => chain),
   countDocuments: vi.fn(() => Promise.resolve(1))
 }));
@@ -27,7 +27,7 @@ describe('professional service', () => {
       yearsOfExperience: { $gte: 5 },
       hourlyRate: { $lte: 100 }
     };
-    const model = require('../backend/models/professionalProfile');
+    const model = require('../backend/models/professionalProfile.js');
     expect(model.find.mock.calls[0][0]).toEqual(expectedQuery);
     expect(chain.skip.mock.calls[0][0]).toBe(20);
     expect(chain.limit.mock.calls[0][0]).toBe(10);
