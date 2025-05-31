@@ -14,13 +14,17 @@
  * @returns {string | undefined}
  */
 function getEnv(name) {
-  if (typeof window !== 'undefined' && typeof window.meta !== 'undefined') {
-    // Vite exposes env vars on import.meta.env
-    if (window.meta.env && Object.prototype.hasOwnProperty.call(window.meta.env, name)) {
-      return window.meta.env[name];
+  // Prefer Vite style import.meta.env when available
+  if (typeof import.meta !== 'undefined') {
+    const env = import.meta.env;
+    if (env && Object.prototype.hasOwnProperty.call(env, name)) {
+      return env[name];
     }
   }
-  return process.env[name];
+  if (typeof process !== 'undefined' && process.env && Object.prototype.hasOwnProperty.call(process.env, name)) {
+    return process.env[name];
+  }
+  return undefined;
 }
 
 /**
