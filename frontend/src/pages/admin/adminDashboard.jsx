@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks';
 import { Navigate } from 'react-router-dom';
 import AdminAPI from '../../api/admin';
-import Card from '../../components/common/Card';
-import Button from '../../components/common/Button';
-import Spinner from '../../components/common/Spinner';
+import Card from '../../components/common/card';
+import Button from '../../components/common/button';
+import Spinner from '../../components/common/spinner';
 
 const AdminDashboard = () => {
   const { user } = useAuth();

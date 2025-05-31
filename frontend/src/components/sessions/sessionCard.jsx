@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import SessionsAPI from "../../api/sessions";
-import Button from "../common/Button";
-import Modal from "../common/Modal";
+import Button from "../common/button";
+import Modal from "../common/modal";
 import RescheduleModal from "./rescheduleModal";
 import ProfileStrip from "./profileStrip";
 

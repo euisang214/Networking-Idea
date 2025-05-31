@@ -3,10 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks';
 import ProfessionalsAPI from '../../api/professionals';
 import SessionsAPI from '../../api/sessions';
-import Button from '../common/Button';
-import Card from '../common/Card';
-import Spinner from '../common/Spinner';
-import BookingForm from '../sessions/BookingForm';
+import Button from '../common/button';
+import Card from '../common/card';
+import Spinner from '../common/spinner';
+import BookingForm from '../sessions/bookingForm';
 
 const ProfessionalDetail = () => {
   const { id } = useParams();

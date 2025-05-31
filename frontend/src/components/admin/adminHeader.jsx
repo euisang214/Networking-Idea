@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../hooks';
 import { useNavigate } from 'react-router-dom';
-import Button from '../common/Button';
+import Button from '../common/button';
 
 const AdminHeader = () => {
   const { user, logout } = useAuth();

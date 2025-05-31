@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import ProfessionalsAPI from '../../api/professionals';
-import ProfessionalCard from './ProfessionalCard';
-import ProfessionalFilter from './ProfessionalFilter';
-import Spinner from '../common/Spinner';
-import Button from '../common/Button';
+import ProfessionalCard from './professionalCard';
+import ProfessionalFilter from './professionalFilter';
+import Spinner from '../common/spinner';
+import Button from '../common/button';
 
 const ProfessionalList = () => {
   const [professionals, setProfessionals] = useState([]);

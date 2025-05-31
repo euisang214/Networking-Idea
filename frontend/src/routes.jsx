@@ -5,7 +5,7 @@ import { useAuth } from './hooks';
 
 
 // Admin Components
-import AdminLayout from './components/admin/AdminLayout';
+import AdminLayout from './components/admin/adminLayout';
 import AdminDashboard from './pages/admin/adminDashboard';
 import SessionManagement from './pages/admin/sessionManagement';
 import ReferralManagement from './pages/admin/referralManagement';
@@ -13,25 +13,25 @@ import UserManagement from './pages/admin/userManagement';
 import Analytics from './pages/admin/analytics';
 
 // Layouts
-import MainLayout from './layouts/MainLayout';
-import AuthLayout from './layouts/AuthLayout';
-import DashboardLayout from './layouts/DashboardLayout';
+import MainLayout from './layouts/mainLayout';
+import AuthLayout from './layouts/authLayout';
+import DashboardLayout from './layouts/dashboardLayout';
 
 // Public pages
 import Home from './pages/Home';
-import ProfessionalsPage from './pages/ProfessionalsPage';
-import ProfessionalDetailPage from './pages/ProfessionalDetailsPage';
+import ProfessionalsPage from './pages/professionalsPage';
+import ProfessionalDetailPage from './pages/professionalDetails';
 
 // Auth pages
-import Login from './pages/auth/Login';
-import Register from './pages/auth/Register';
-import ForgotPassword from './pages/auth/ForgotPassword';
-import ResetPassword from './pages/auth/ResetPassword';
-import VerifyEmail from './pages/auth/VerifyEmail';
+import Login from './pages/auth/login';
+import Register from './pages/auth/register';
+import ForgotPassword from './pages/auth/forgotPassword';
+import ResetPassword from './pages/auth/resetPassword';
+import VerifyEmail from './pages/auth/verifyEmail';
 
 // Protected pages
-import SessionsPage from './pages/SessionsPage';
-import SessionDetailPage from './pages/SessionDetailPage';
+import SessionsPage from './pages/sessionsPage';
+import SessionDetailPage from './pages/sessionDetailPage';
 import ReferralHistoryPage from './pages/ReferralHistory';
 import ProfilePage from './pages/ProfilePage';
 import SettingsPage from './pages/SettingsPage';

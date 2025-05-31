@@ -1,5 +1,5 @@
 import React from 'react';
-import ProfessionalList from '../components/professionals/ProfessionalList';
+import ProfessionalList from '../components/professionals/professionalList';
 
 const ProfessionalsPage = () => {
   return (

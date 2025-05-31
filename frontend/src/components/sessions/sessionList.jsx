@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import SessionsAPI from '../../api/sessions';
-import SessionCard from './SessionCard';
-import Spinner from '../common/Spinner';
-import Button from '../common/Button';
+import SessionCard from './sessionCard';
+import Spinner from '../common/spinner';
+import Button from '../common/button';
 
 const SessionList = ({ type = 'user' }) => {
   const [sessions, setSessions] = useState([]);

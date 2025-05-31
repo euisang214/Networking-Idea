@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useAuth } from "../../hooks";
 import SessionsAPI from "../../api/sessions";
-import Card from "../common/Card";
-import Button from "../common/Button";
-import Spinner from "../common/Spinner";
+import Card from "../common/card";
+import Button from "../common/button";
+import Spinner from "../common/spinner";
 import FeedbackForm from './feedbackForm';
 import JobOfferForm from '../jobOffers/jobOfferForm';
 
