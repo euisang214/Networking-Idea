@@ -90,7 +90,26 @@ access to specific roles (e.g. `candidate`, `professional`, `admin`).
 6. Run unit tests (optional):
    ```bash
   npm test
-  ```
+   ```
+
+### Production Deployment
+
+1. Edit `.env` and set `NODE_ENV=production`. Update the remaining values with
+   your production database connection and service credentials.
+2. Build the optimized frontend assets:
+   ```bash
+   npm run build
+   ```
+3. Start the services in detached mode:
+   ```bash
+   docker compose up --build -d
+   ```
+   Nginx will proxy the API and serve the frontend on ports `80` (and `443` if
+   certificates are configured under `certbot/`).
+4. To stop the production stack:
+   ```bash
+   docker compose down
+   ```
 
 ### Infrastructure
 
