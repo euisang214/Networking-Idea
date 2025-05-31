@@ -10,7 +10,7 @@ class Session {
   }
 }
 Session.countDocuments = vi.fn(() => Promise.resolve(0));
-vi.mock('../backend/models/session', () => Session);
+vi.mock('../backend/models/session.js', () => Session);
 
 const professional = {
   _id: 'pro1',
@@ -19,29 +19,29 @@ const professional = {
   title: 'Engineer',
   availability: [{ day: 'monday', startTime: '09:00', endTime: '17:00' }]
 };
-vi.mock('../backend/models/professionalProfile', () => ({
+vi.mock('../backend/models/professionalProfile.js', () => ({
   findById: vi.fn(() => ({ populate: vi.fn(() => Promise.resolve(professional)) }))
 }));
 
-vi.mock('../backend/models/user', () => ({
+vi.mock('../backend/models/user.js', () => ({
   findById: vi.fn(() => Promise.resolve({ _id: 'user1', firstName: 'First', lastName: 'Last', email: 'user@example.com' }))
 }));
 
-vi.mock('../backend/models/sessionVerification', () => ({
+vi.mock('../backend/models/sessionVerification.js', () => ({
   create: vi.fn()
 }));
 
-vi.mock('../backend/services/zoomService', () => ({
+vi.mock('../backend/services/zoomService.js', () => ({
   createMeeting: vi.fn(() => Promise.resolve({ meetingId: 'm1', meetingUrl: 'http://zoom', password: 'pwd', startUrl: 'http://start' }))
 }));
 
-vi.mock('../backend/models/sessionVerification', () => function(){});
+vi.mock('../backend/models/sessionVerification.js', () => function(){});
 
 const notificationService = { sendNotification: vi.fn() };
-vi.mock('../backend/services/notificationService', () => notificationService);
+vi.mock('../backend/services/notificationService.js', () => notificationService);
 
 const emailService = { sendSessionConfirmation: vi.fn() };
-vi.mock('../backend/services/emailService', () => emailService);
+vi.mock('../backend/services/emailService.js', () => emailService);
 
 vi.mock('../backend/utils/logger', () => ({ info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() }));
 

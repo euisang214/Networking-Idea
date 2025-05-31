@@ -93,17 +93,11 @@ const handleReferralEmail = async (emailData) => {
     
     await referral.save();
     
-    // **AUTOMATIC PAYOUT PROCESSING**
-    const PaymentService = require('../services/paymentService');
-    const payoutResult = await PaymentService.processReferralPayment(referral._id);
-    
-    logger.info(`Referral automatically processed and paid: ${referral._id}`, payoutResult);
-    
-    return { 
-      processed: true, 
-      referralId: referral._id,
-      payoutAmount: payoutResult.amount,
-      platformFee: payoutResult.platformFee
+    logger.info(`Referral automatically recorded: ${referral._id}`);
+
+    return {
+      processed: true,
+      referralId: referral._id
     };
     
   } catch (error) {

@@ -164,80 +164,10 @@ class PaymentService {
     }
   }
 
-  // Process referral reward (obsolete?)
-  async processReferralPayment(referralId) {
-    try {
-      const referral = await Referral.findById(referralId)
-                                    .populate('professional')
-                                    .populate('candidate');
-      
-      if (!referral) {
-        throw new Error('Referral not found');
-      }
-      
-      // Verify referral meets criteria
-      if (!referral.emailDomainVerified || referral.status !== 'verified') {
-        throw new Error('Cannot reward unverified referral');
-      }
-      
-      // Check if already rewarded
-      if (referral.status === 'rewarded') {
-        logger.warn(`Referral ${referralId} already rewarded`);
-        return {
-          success: true,
-          alreadyRewarded: true,
-          referralId: referralId
-        };
-      }
-      
-      const professional = referral.professional;
-      
-      // Process payout via Stripe
-      const transfer = await stripe.transfers.create({
-        amount: this.referralRewardAmount * 100, // in cents
-        currency: 'usd',
-        destination: professional.stripeConnectedAccountId,
-        description: `Referral reward for candidate ${referral.candidate.email}`,
-        metadata: {
-          referralId: referral._id.toString(),
-          professionalId: professional._id.toString(),
-          candidateId: referral.candidate._id.toString()
-        }
-      }, {
-        idempotencyKey: `referral-${referral._id.toString()}`
-      });
-      
-      // Update referral status
-      referral.status = 'rewarded';
-      referral.paymentStatus = 'paid';
-      referral.paymentId = transfer.id;
-      referral.rewardAmount = this.referralRewardAmount;
-      referral.payoutDate = new Date();
-      await referral.save();
-      
-      // Update professional statistics
-      professional.statistics.successfulReferrals += 1;
-      await professional.save();
-      
-      // Send notifications
-      await NotificationService.sendNotification(professional.user, 'referralRewarded', {
-        referralId: referral._id,
-        amount: this.referralRewardAmount,
-        candidateEmail: referral.candidate.email
-      });
-      
-      logger.info(`Referral payment processed for referral ${referralId}: ${transfer.id}`);
-      
-      return {
-        success: true,
-        transferId: transfer.id,
-        amount: this.referralRewardAmount,
-        referralId: referralId
-      };
-    } catch (error) {
-      logger.error(`Referral payment failed: ${error.message}`);
-      throw new Error(`Referral payment failed: ${error.message}`);
-    }
+  // Referral payouts are no longer issued
+  async processReferralPayment() {
+    logger.info('Referral payment logic disabled');
+    return { success: false, message: 'Referral payouts are no longer supported' };
   }
 
   // Process offer bonus payment

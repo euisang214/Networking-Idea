@@ -3,7 +3,6 @@ const config = require('../config');
 const stripe = require('stripe')(config.stripe.secretKey);
 const ProfessionalProfile = require('../models/professionalProfile');
 const Session = require('../models/session');
-const Referral = require('../models/referral');
 const Payment = require('../models/payment');
 const EmailService = require('../services/emailService');
 const NotificationService = require('../services/notificationService');
@@ -22,42 +21,12 @@ const payoutJob = cron.schedule('*/1 * * * *', async () => {
     await processWeeklyPayouts();
     await processMonthlyPayouts();
     await processDailyPayouts();
-    await processVerifiedReferrals();
     
     logger.info('Payout job completed successfully');
   } catch (error) {
     logger.error(`Error in payout job: ${error.message}`, { error });
   }
 });
-
-// Add this function to handle any missed referrals:
-async function processVerifiedReferrals() {
-  try {
-    const Referral = require('../models/referral');
-    const PaymentService = require('../services/paymentService');
-    
-    // Find verified referrals that haven't been paid yet
-    const pendingReferrals = await Referral.find({
-      status: 'verified',
-      emailDomainVerified: true,
-      paymentStatus: { $in: ['pending', null] }
-    });
-    
-    logger.info(`Processing ${pendingReferrals.length} pending referral payouts`);
-    
-    for (const referral of pendingReferrals) {
-      try {
-        await PaymentService.processReferralPayment(referral._id);
-        logger.info(`Processed referral payout: ${referral._id}`);
-      } catch (error) {
-        logger.error(`Failed to process referral ${referral._id}: ${error.message}`);
-      }
-    }
-  } catch (error) {
-    logger.error(`Error in referral processing: ${error.message}`);
-  }
-}
-
 
 /**
  * Process weekly payouts (runs on Mondays)
@@ -153,14 +122,6 @@ async function processPayout(professional) {
       zoomMeetingVerified: true
     });
     
-    // Get unpaid verified referrals
-    const verifiedReferrals = await Referral.find({
-      professional: professional._id,
-      status: 'verified',
-      emailDomainVerified: true,
-      paymentStatus: 'pending'
-    });
-    
     // Calculate total payout amount
     const sessionAmount = completedSessions.reduce((sum, session) => {
       // Apply platform fee (e.g., 15%)
@@ -169,12 +130,7 @@ async function processPayout(professional) {
       const professionalAmount = session.price - platformFee;
       return sum + professionalAmount;
     }, 0);
-    
-    const referralAmount = verifiedReferrals.reduce((sum, referral) => {
-      return sum + config.business.referralRewardAmount;
-    }, 0);
-    
-    const totalAmount = sessionAmount + referralAmount;
+    const totalAmount = sessionAmount;
     
     // Skip if amount is below threshold (default $1)
     const minPayout = config.business.minPayoutAmount;
@@ -188,7 +144,7 @@ async function processPayout(professional) {
       amount: Math.round(totalAmount * 100), // convert to cents
       currency: 'usd',
       destination: professional.stripeConnectedAccountId,
-      description: `Payout for ${completedSessions.length} sessions and ${verifiedReferrals.length} referrals`
+      description: `Payout for ${completedSessions.length} sessions`
     }, {
       idempotencyKey: `payout-${professional._id.toString()}-${Date.now()}`
     });
@@ -217,40 +173,14 @@ async function processPayout(professional) {
       });
     }
     
-    // Update referral status
-    for (const referral of verifiedReferrals) {
-      referral.status = 'rewarded';
-      referral.paymentStatus = 'paid';
-      referral.paymentId = payout.id;
-      referral.rewardAmount = config.business.referralRewardAmount;
-      referral.payoutDate = new Date();
-      await referral.save();
-      
-      // Create payment record
-      await Payment.create({
-        user: null, // System-initiated payout
-        recipient: professional.user._id,
-        amount: config.business.referralRewardAmount,
-        currency: 'usd',
-        description: `Payout for referral ${referral._id}`,
-        type: 'payout',
-        status: 'completed',
-        stripeTransferId: payout.id,
-        referral: referral._id,
-        completedAt: new Date()
-      });
-    }
-    
     // Update professional statistics
     professional.statistics.totalEarnings += totalAmount;
-    professional.statistics.successfulReferrals += verifiedReferrals.length;
     await professional.save();
-    
+
     // Send notification
     await NotificationService.sendNotification(professional.user._id, 'payoutProcessed', {
       amount: totalAmount,
-      sessions: completedSessions.length,
-      referrals: verifiedReferrals.length
+      sessions: completedSessions.length
     });
     
     // Send email notification
@@ -265,7 +195,7 @@ async function processPayout(professional) {
       arrivalDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000) // Estimated arrival in 2 days
     }, professional);
     
-    logger.info(`Processed payout for professional ${professional._id}: $${totalAmount} for ${completedSessions.length} sessions and ${verifiedReferrals.length} referrals`);
+    logger.info(`Processed payout for professional ${professional._id}: $${totalAmount} for ${completedSessions.length} sessions`);
     
     return payout;
   } catch (error) {

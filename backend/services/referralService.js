@@ -1,6 +1,5 @@
 const Referral = require('../models/referral');
 const ProfessionalProfile = require('../models/professionalProfile');
-const PaymentService = require('./paymentService');
 const NotificationService = require('./notificationService');
 const logger = require('../utils/logger');
 const config = require('../config');
@@ -69,13 +68,6 @@ class ReferralService {
         throw new Error('Referral not found');
       }
 
-      const eligibility = await this.checkPayoutEligibility(referral);
-      if (!eligibility.eligible) {
-        referral.status = 'rejected';
-        await referral.save();
-        return { status: 'rejected', reason: eligibility.reason };
-      }
-
       referral.status = 'verified';
       referral.emailDomainVerified = true;
       referral.verificationDetails = {
@@ -85,22 +77,14 @@ class ReferralService {
       };
       await referral.save();
 
-      const payout = await PaymentService.processReferralPayment(referral._id);
-      referral.status = 'rewarded';
-      referral.paymentId = payout.transferId;
-      referral.paymentStatus = 'paid';
-      referral.payoutDate = new Date();
-      await referral.save();
-
       if (referral.professional && referral.professional.user) {
-        await NotificationService.sendNotification(referral.professional.user, 'referralRewarded', {
+        await NotificationService.sendNotification(referral.professional.user, 'referralVerified', {
           referralId: referral._id,
-          amount: payout.amount,
           candidateEmail: referral.candidate?.email,
         });
       }
 
-      return { status: 'rewarded', transferId: payout.transferId };
+      return { status: 'verified' };
     } catch (error) {
       logger.error(`Failed to verify referral: ${error.message}`);
       throw error;
