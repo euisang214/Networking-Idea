@@ -7,6 +7,8 @@ import PaymentsAPI from '../../api/payment';
 import ReferralsAPI from '../../api/referrals';
 import AdminAPI from '../../api/admin';
 import JobOffersAPI from '../../api/jobOffers';
+import MessagesAPI from '../../api/messages';
+import UserAPI from '../../api/user';
 
 export { default as apiClient } from './client';
 export { default as AuthAPI } from '../../api/auth';
@@ -17,6 +19,8 @@ export { default as PaymentsAPI } from '../../api/payment';
 export { default as ReferralsAPI } from '../../api/referrals';
 export { default as AdminAPI } from '../../api/admin';
 export { default as JobOffersAPI } from '../../api/jobOffers';
+export {default as MessagesAPI } from '../../api/messages'
+export {default as UserAPI } from '../../api/user'
 
 const API = {
   apiClient,
@@ -27,7 +31,9 @@ const API = {
   PaymentsAPI,
   ReferralsAPI,
   AdminAPI,
-  JobOffersAPI
+  JobOffersAPI,
+  MessagesAPI,
+  UserAPI
 };
 
 export default API;
