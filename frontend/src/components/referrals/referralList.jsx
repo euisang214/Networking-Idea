@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import ReferralsAPI from '../../api/referrals';
-import Card from '../common/Card';
-import Spinner from '../common/Spinner';
-import Button from '../common/Button';
-import ReferralInstructions from './ReferralInstructions';
+import Card from '../common/card';
+import Spinner from '../common/spinner';
+import Button from '../common/button';
+import ReferralInstructions from './referralInstructions';
 
 const ReferralList = () => {
   const [referrals, setReferrals] = useState([]);

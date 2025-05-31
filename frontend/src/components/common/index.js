@@ -1,8 +1,8 @@
-export { default as Button } from './Button';
-export { default as Card } from './Card';
-export { default as Input } from './Input';
-export { default as FileInput } from './FileInput';
-export { default as Modal } from './Modal';
-export { default as Navbar } from './Navbar';
-export { default as Footer } from './Footer';
-export { default as Spinner } from './Spinner';
+export { default as Button } from './button';
+export { default as Card } from './card';
+export { default as Input } from './input';
+export { default as FileInput } from './fileInput';
+export { default as Modal } from './modal';
+export { default as Navbar } from './navbar';
+export { default as Footer } from './footer';
+export { default as Spinner } from './spinner';

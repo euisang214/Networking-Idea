@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import Modal from "../common/Modal";
+import Modal from "../common/modal";
 
 const ProfileStrip = ({ user, role }) => {
   const [open, setOpen] = useState(false);

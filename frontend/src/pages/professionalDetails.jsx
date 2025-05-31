@@ -1,5 +1,5 @@
 import React from 'react';
-import ProfessionalDetail from '../components/professionals/ProfessionalDetail';
+import ProfessionalDetail from '../components/professionals/professionalDetail';
 
 const ProfessionalDetailPage = () => {
   return <ProfessionalDetail />;

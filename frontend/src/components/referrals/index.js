@@ -1,3 +1,3 @@
-export { default as ReferralInstructions } from './ReferralInstructions';
-export { default as ReferralList } from './ReferralList';
-export { default as ReferralHistory } from './ReferralHistory';
+export { default as ReferralInstructions } from './referralInstructions';
+export { default as ReferralList } from './referralList';
+export { default as ReferralHistory } from './referralHistory';

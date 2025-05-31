@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth, useForm } from '../../hooks';
-import Input from '../../common/Input';
-import Button from '../../common/Button';
+import Input from '../../common/input';
+import Button from '../../common/button';
 
 const LoginForm = () => {
   const navigate = useNavigate();

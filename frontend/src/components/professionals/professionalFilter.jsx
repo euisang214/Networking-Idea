@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import ProfessionalsAPI from '../../api/professionals';
-import Input from '../common/Input';
-import Button from '../common/Button';
+import Input from '../common/input';
+import Button from '../common/button';
 
 const ProfessionalFilter = ({ onFilterChange }) => {
   const [industries, setIndustries] = useState([]);

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import Modal from "../common/Modal";
-import Button from "../common/Button";
+import Modal from "../common/modal";
+import Button from "../common/button";
 import SessionsAPI from "../../api/sessions";
 
 const RescheduleModal = ({ isOpen, onClose, session, onRescheduled }) => {

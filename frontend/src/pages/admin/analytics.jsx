@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import AdminAPI from '../../api/admin';
-import Card from '../../components/common/Card';
-import StatsCard from '../../components/admin/StatsCard';
-import Spinner from '../../components/common/Spinner';
+import Card from '../../components/common/card';
+import StatsCard from '../../components/admin/statsCard';
+import Spinner from '../../components/common/spinner';
 
 const Analytics = () => {
   const [analytics, setAnalytics] = useState(null);

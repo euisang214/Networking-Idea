@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks';
-import SessionList from '../components/sessions/SessionList';
-import Card from '../components/common/Card';
+import SessionList from '../components/sessions/sessionList';
+import Card from '../components/common/card';
 
 const SessionsPage = () => {
   const { user } = useAuth();
