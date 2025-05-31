@@ -32,20 +32,20 @@ import VerifyEmail from './pages/auth/verifyEmail';
 // Protected pages
 import SessionsPage from './pages/sessionsPage';
 import SessionDetailPage from './pages/sessionDetailPage';
-import ReferralHistoryPage from './pages/ReferralHistory';
-import ProfilePage from './pages/ProfilePage';
-import SettingsPage from './pages/SettingsPage';
-import MessagesPage from './pages/MessagesPage';
-import NotificationsPage from './pages/NotificationsPage';
+import ReferralHistoryPage from './pages/referralHistory';
+import ProfilePage from './pages/profilePage';
+import SettingsPage from './pages/settingsPage';
+import MessagesPage from './pages/messagesPage';
+import NotificationsPage from './pages/notificationsPage';
 import JobOffersPage from './pages/jobOffersPage';
 
 // Dashboard pages
-import DashboardHome from './pages/dashboard/DashboardHome';
-import DashboardSessions from './pages/dashboard/DashboardSessions';
-import DashboardReferrals from './pages/dashboard/DashboardReferrals';
-import DashboardEarnings from './pages/dashboard/DashboardEarnings';
-import DashboardProfile from './pages/dashboard/DashboardProfile';
-import DashboardSettings from './pages/dashboard/DashboardSettings';
+import DashboardHome from './pages/dashboard/dashboardHome';
+import DashboardSessions from './pages/dashboard/dashboardSessions';
+import DashboardReferrals from './pages/dashboard/dashboardReferrals';
+import DashboardEarnings from './pages/dashboard/dashboardEarnings';
+import DashboardProfile from './pages/dashboard/dashboardProfile';
+import DashboardSettings from './pages/dashboard/dashboardSettings';
 
 // Private route component
 const PrivateRoute = ({ children }) => {
