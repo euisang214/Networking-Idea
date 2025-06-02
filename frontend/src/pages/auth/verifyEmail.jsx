@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/outline';
 import { Button, Card, Spinner } from '../../components/common';
 import { useAuth } from '../../hooks';
 import AuthAPI from '../../api/auth';
