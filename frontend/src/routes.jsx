@@ -32,7 +32,7 @@ import VerifyEmail from './pages/auth/verifyEmail';
 // Protected pages
 import SessionsPage from './pages/sessionsPage';
 import SessionDetailPage from './pages/sessionDetailPage';
-import ReferralHistoryPage from './pages/referralHistory';
+import ReferralHistoryPage from './pages/ReferralHistory';
 import ProfilePage from './pages/profilePage';
 import SettingsPage from './pages/settingsPage';
 import MessagesPage from './pages/messagesPage';
