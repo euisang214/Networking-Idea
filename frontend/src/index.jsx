@@ -4,6 +4,8 @@ import './styles/index.css';
 import App from './app';
 import reportWebVitals from './reportWebVitals';
 
+console.log('index.jsx loaded');
+
 const container = document.getElementById('root');
 const root = createRoot(container);
 
