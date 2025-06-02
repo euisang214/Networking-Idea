@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { LockClosedIcon } from '@heroicons/react/outline';
+import { LockClosedIcon } from '@heroicons/react/24/outline';
 import { Input, Button, Card } from '../../components/common';
 import { useAuth } from '../../hooks';
 import AuthAPI from '../../api/auth';
